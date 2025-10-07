@@ -1,0 +1,3 @@
+1-> perguntar se 1 é healthy e 2 cancer
+2-> convertemos as strings da coluna Classification para Ints
+3-> perguntar se podemos substituir a coluna "Classification" logo pelos labels ou criamos uma coluna nov

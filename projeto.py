@@ -21,6 +21,8 @@ dados['Classification'].iloc[ixCancer]=Classes[1]
 
 fnames=dados.columns[1:]#Get the feature names
 
+"Kruskal-Wallis H-test"
+
 H_rank=[]
 
 for feature in fnames:
@@ -34,3 +36,40 @@ Hs=sorted(H_rank, key=lambda x: x[1], reverse=True)
 
 for f in Hs:
     print(f"Feature: {f[0]}, H-statistic: {f[1]:.4f}")
+
+"ROC, AUC"
+
+ixHealthyCancer=np.concatenate((ixHealthy[0],ixCancer[0]))
+y=dados['Classification'].to_numpy()[ixHealthyCancer]
+roc_auc=np.zeros(fnames.shape)
+i=0
+
+for f in fnames:#Go along features
+    fpr, tpr, _= roc_curve(y,dados[f].to_numpy()[ixHealthyCancer],pos_label="Cancer")
+    
+    figR = go.Figure()
+    figR.add_scatter(x=fpr, y=tpr,mode='lines+markers')
+    figR.update_layout(autosize=False,width=700,height=700,title=dict(text=f))
+    figR.update_xaxes(title_text="1-SP",range=[-0.01, 1.01])
+    figR.update_yaxes(title_text="SS",range=[-0.01, 1.01])
+    
+
+    roc_auc[i] = auc(fpr, tpr)#Compute area under the ROC curve
+    
+    figR.add_annotation(x=0.5, y=0.5,
+            text="AUC: "+str(roc_auc[i]),
+            showarrow=False,
+            yshift=10)
+    figR.show()
+    i=i+1
+
+sortIx=np.flip(np.argsort(roc_auc))#Sort using AUC
+print("Sorting accourding to ROC-AUC:")
+for i in sortIx:
+    print(fnames[i]+"-->"+str(roc_auc[i]))
+
+"Se AUC for a feature is 0.5, it means that the feature does not discriminate between the two classes"
+"ou seja, a feature aumenta com Cancer"
+
+
+
