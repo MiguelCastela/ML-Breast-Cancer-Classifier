@@ -20,7 +20,8 @@ Classes=["Healthy","Cancer"]
 dados['Classification'].iloc[ixHealthy]=Classes[0]
 dados['Classification'].iloc[ixCancer]=Classes[1]
 
-fnames=dados.columns[1:]#Get the feature names
+fnames=dados.columns[0:-1]#Get the feature names
+
 
 "---------Kruskal-Wallis H-test---------"
 
@@ -45,9 +46,13 @@ y=dados['Classification'].to_numpy()[ixHealthyCancer]
 roc_auc=np.zeros(fnames.shape)
 i=0
 
+
+
 for f in fnames:#Go along features
+
+
     fpr, tpr, _= roc_curve(y,dados[f].to_numpy()[ixHealthyCancer],pos_label="Cancer")
-    
+
     figR = go.Figure()
     figR.add_scatter(x=fpr, y=tpr,mode='lines+markers')
     figR.update_layout(autosize=False,width=700,height=700,title=dict(text=f))
@@ -73,9 +78,10 @@ for i in sortIx:
 "ou seja, a feature aumenta com Cancer"
 
 "------CORRELATION MATRIX-------"
-X=np.array([dados[Hs[0][0]],dados[Hs[1][0]],dados[Hs[2][0]],dados[Hs[3][0]],dados[Hs[4][0]],dados[Hs[5][0]],dados[Hs[6][0]],dados[Hs[7][0]],dados[Hs[8][0]],dados[Hs[9][0]]])
+X=np.array([dados[Hs[0][0]],dados[Hs[1][0]],dados[Hs[2][0]],dados[Hs[3][0]],dados[Hs[4][0]],dados[Hs[5][0]],dados[Hs[6][0]],dados[Hs[7][0]],dados[Hs[8][0]]])
+
 corrMat=np.corrcoef(X)
-fig= px.imshow(corrMat, x=[Hs[0][0],Hs[1][0],Hs[2][0],Hs[3][0],Hs[4][0],Hs[5][0],Hs[6][0],Hs[7][0],Hs[8][0],Hs[9][0]], y=[Hs[0][0],Hs[1][0],Hs[2][0],Hs[3][0],Hs[4][0],Hs[5][0],Hs[6][0],Hs[7][0],Hs[8][0],Hs[9][0]], color_continuous_scale='RdBu', title='Correlation Matrix of Top 10 Features')
+fig= px.imshow(corrMat, x=[Hs[0][0],Hs[1][0],Hs[2][0],Hs[3][0],Hs[4][0],Hs[5][0],Hs[6][0],Hs[7][0],Hs[8][0]], y=[Hs[0][0],Hs[1][0],Hs[2][0],Hs[3][0],Hs[4][0],Hs[5][0],Hs[6][0],Hs[7][0],Hs[8][0]], color_continuous_scale='RdBu', title='Correlation Matrix of Top 10 Features')
 fig.show()
 
 
