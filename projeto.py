@@ -5,6 +5,7 @@ from sklearn.metrics import roc_curve, auc
 import plotly.express as px 
 import scipy.stats as stats
 
+
 #Read XLS      
 xlsFile=pd.read_excel("dataR2.xlsx",usecols=["Age","BMI","Glucose","Insulin","HOMA","Leptin","Adiponectin","Resistin","MCP.1","Classification"])
 dados=pd.DataFrame(data=xlsFile.dropna()) 
@@ -21,7 +22,7 @@ dados['Classification'].iloc[ixCancer]=Classes[1]
 
 fnames=dados.columns[1:]#Get the feature names
 
-"Kruskal-Wallis H-test"
+"---------Kruskal-Wallis H-test---------"
 
 H_rank=[]
 
@@ -37,7 +38,7 @@ Hs=sorted(H_rank, key=lambda x: x[1], reverse=True)
 for f in Hs:
     print(f"Feature: {f[0]}, H-statistic: {f[1]:.4f}")
 
-"ROC, AUC"
+"---------ROC, AUC---------"
 
 ixHealthyCancer=np.concatenate((ixHealthy[0],ixCancer[0]))
 y=dados['Classification'].to_numpy()[ixHealthyCancer]
@@ -70,6 +71,12 @@ for i in sortIx:
 
 "Se AUC for a feature is 0.5, it means that the feature does not discriminate between the two classes"
 "ou seja, a feature aumenta com Cancer"
+
+"------CORRELATION MATRIX-------"
+X=np.array([dados[Hs[0][0]],dados[Hs[1][0]],dados[Hs[2][0]],dados[Hs[3][0]],dados[Hs[4][0]],dados[Hs[5][0]],dados[Hs[6][0]],dados[Hs[7][0]],dados[Hs[8][0]],dados[Hs[9][0]]])
+corrMat=np.corrcoef(X)
+fig= px.imshow(corrMat, x=[Hs[0][0],Hs[1][0],Hs[2][0],Hs[3][0],Hs[4][0],Hs[5][0],Hs[6][0],Hs[7][0],Hs[8][0],Hs[9][0]], y=[Hs[0][0],Hs[1][0],Hs[2][0],Hs[3][0],Hs[4][0],Hs[5][0],Hs[6][0],Hs[7][0],Hs[8][0],Hs[9][0]], color_continuous_scale='RdBu', title='Correlation Matrix of Top 10 Features')
+fig.show()
 
 
 
