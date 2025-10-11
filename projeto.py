@@ -4,6 +4,9 @@ import pandas as pd
 from sklearn.metrics import roc_curve, auc
 import plotly.express as px 
 import scipy.stats as stats
+from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+
 
 
 #Read XLS      
@@ -86,18 +89,20 @@ fig.show()
 
 X=dados.to_numpy()[:,:-1] #todas as colunas menos a última 
 y=dados.to_numpy()[:,9] #só a coluna da Classificação
+
 X=X.astype(float)
 #Normalize
-X=(X-np.mean(X,axis=0))/np.std(X,axis=0)
 
-from sklearn.decomposition import PCA
+mu = np.mean(X, axis=0)
+st = np.std(X, axis=0)
+X=(X-mu)/st
+
 pca = PCA()
 pca.fit(X)
-#PCA eigenvalues/Explained variance
+
 print("PCA eigenvalues/Explained variance")
 print(pca.explained_variance_)
 print("Sum of eigenvalues="+str(np.sum(pca.explained_variance_)))
-#PCA eigenvectors/Principal components
 print("PCA eigenvectors/Principal components")
 W=pca.components_.T
 print(W)
@@ -106,4 +111,61 @@ print(W)
 
 
 
+
+
+Xp = X @ W[:, 0]  # projection of all samples onto PC1
+
+fig=px.scatter(x=Xp,y=np.zeros(np.shape(X)[0]),color=y,labels=dict(x="PC1",y="",color="Class"))
+fig.update_traces(marker_size=5)
+fig.show()
+
+
+#Scree plot
+fig = px.scatter(x=np.arange(1,len(pca.explained_variance_)+1,1), y=pca.explained_variance_,
+                 labels=dict(x="PC",y="Explained Variance"))
+fig.add_hline(y=1,line_width=3, line_dash="dash", line_color="red")
+fig.update_traces(marker_size=10)
+fig.show()
+
+#isto faz o que???????
+"""
+print("Variance (%) retained accourding to Kaiser: "+str(pca.explained_variance_[0]**2/(np.sum(pca.explained_variance_**2))*100))
+print("Variance (%) retained accourding to Scree: "+str(np.sum(pca.explained_variance_[0:6]**2)/(np.sum(pca.explained_variance_**2))*100))
+"""
+
+#kaiser criterion
+
+pca2=PCA(n_components=1)
+X1D=pca2.fit_transform(X)
+print(np.shape(X1D))
+
+fig=px.scatter(x=X1D[:,0],y=np.zeros(np.shape(X1D)[0]),color=y,labels=dict(x="PC1",y="",color="Class"))
+fig.update_traces(marker_size=8)
+fig.update_xaxes(title_text="PC1")
+fig.show()
+
+
+
+#---------LDA---------
+
+
+lda = LinearDiscriminantAnalysis()
+
+
+X=dados.to_numpy()[:,:-1] #todas as colunas menos a última 
+y=dados.to_numpy()[:,9] #só a coluna da Classificação
+
+X=X.astype(float)
+
+X=(X-np.mean(X,axis=0))/np.std(X,axis=0)
+
+# prepare transform on dataset
+lda.fit(X,y)
+# apply transform to dataset
+transformed = lda.transform(X)
+
+#Plot transformed data
+fig=px.scatter(x=transformed[:,0],y=transformed[:,0],color=y,labels=dict(x="LDA1",y="LDA2",color="Class"))
+fig.update_traces(marker_size=10)
+fig.show()
 
