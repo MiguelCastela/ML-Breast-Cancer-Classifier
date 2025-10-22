@@ -45,7 +45,7 @@ def pca_analysis(dados):
     fig.update_traces(marker_size=5)
     fig.show()
 
-    """
+    
     # Scree plot data
     evr = pca_model.explained_variance_ratio_
     df = pd.DataFrame({
@@ -60,7 +60,7 @@ def pca_analysis(dados):
     fig.update_traces(textposition='outside')
     fig.update_layout(yaxis=dict(title="Explained Variance Ratio"), xaxis=dict(title="Principal Component"))
     fig.show()
-    """
+    
 
     
     
