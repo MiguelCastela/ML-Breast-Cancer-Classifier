@@ -3,6 +3,7 @@ import ROC_AUC as roc_auc_module
 import kruskal_wallis as kruskal_wallis_module
 from PCA import pca_analysis, pca_scree, pca_kaiser 
 from LDA import lda_analysis
+from classifiers import run_all_classifiers
 
 
 
@@ -27,13 +28,24 @@ def main():
     # Step 2: ROC-AUC Analysis
     print("\n2. ROC-AUC ANALYSIS")
     print("-" * 30)
-    roc_auc_module.roc_auc_analysis(dados, ixHealthy, ixCancer, fnames)
+    roc = roc_auc_module.roc_auc_analysis(dados, ixHealthy, ixCancer, fnames)
+    top5_roc = [fnames[i] for i in roc.argsort()[-5:][::-1]]
+    print("Top 5 features from ROC-AUC Analysis:", top5_roc)
+    top5_roc_scores = [roc[i] for i in roc.argsort()[-5:][::-1]]
+    print("Top 5 ROC-AUC scores:", top5_roc_scores)
+
+
+    
     
     # Step 3: Kruskal-Wallis Test
     print("\n3. KRUSKAL-WALLIS H-TEST")
     print("-" * 30)
     H_results = kruskal_wallis_module.kruskal_wallis_test(dados, ixHealthy, ixCancer, fnames)
-    
+    top5_kruskall = [f[0] for f in H_results[:5]]
+    print("Top 5 features from Kruskal-Wallis Test:", top5_kruskall)
+    top5_kruskall_stats = [f[1] for f in H_results[:5]]
+    print("Top 5 Kruskal-Wallis H-statistics:", top5_kruskall_stats)
+
     # Create correlation matrix with top features from Kruskal-Wallis
     print("\n3.1 CORRELATION MATRIX OF TOP 9 FEATURES")
     print("-" * 40)
@@ -51,10 +63,22 @@ def main():
     print("\n4. PRINCIPAL COMPONENT ANALYSIS (PCA)")
     print("-" * 40)
     try:
-        pca_analysis(dados)
+        evr, numpcs, pca_model, X, y = pca_analysis(dados)
+        top_pca = evr.argsort()[-numpcs:][::-1]
+        top_pcs = [f"PC{i+1}" for i in top_pca]
+        print("Top" + str(numpcs) + " principal components from PCA Analysis:", top_pcs , evr)
+        X_pca = pca_model.transform(X)[:, :numpcs]  # shape: (n_samples, numpcs)
+
+
         print("\n4.1 PCA SCREE PLOT")
         print("-" * 20)
-        pca_kaiser(dados)
+        num_kaiser, kaiser_indices, kaiser_evr = pca_kaiser(dados)
+
+
+        print("\nTop PCs by Kaiser Criterion:")
+        for i, val in zip(kaiser_indices, kaiser_evr):
+            print(f"  PC{i+1}: {val*100:.2f}% of variance")
+
         print("\n4.2 KAISER CRITERION PCA")
         print("-" * 25)
         pca_scree(dados)
@@ -66,10 +90,43 @@ def main():
     print("\n5. LINEAR DISCRIMINANT ANALYSIS (LDA)")
     print("-" * 40)
     try:
-        lda_analysis(dados, ixHealthy, ixCancer)
+        lda = lda_analysis(dados, ixHealthy, ixCancer)
+        print("LDA for each sample    : ", lda)
     except Exception as e:
         print(f"LDA analysis failed: {e}")
     
+    # Step 6: Run Classifiers with different feature selection methods
+    print("\n6. CLASSIFIERS WITH DIFFERENT FEATURE SELECTIONS")
+    print("-" * 50)
+    try:
+
+        
+        # Run all classifiers with the different feature selection results
+        classifier_results = run_all_classifiers(
+            top5_roc=top5_roc,
+            top5_kruskall=top5_kruskall, 
+            X_pca=X_pca,
+            LD1=lda  # You can specify LDA-selected features here if needed
+        )
+        
+        print("\n" + "="*60)
+        print("CLASSIFIER RESULTS SUMMARY")
+        print("="*60)
+        
+        # Print summary of results
+        for method, results in classifier_results.items():
+            if isinstance(results, dict) and 'test' in results:  # Fisher LDA returns train/test
+                accuracy = results['test'][0]
+                print(f"{method}: Test Accuracy = {accuracy*100:.2f}%")
+            elif isinstance(results, tuple):  # Other classifiers return single metrics
+                accuracy = results[0]
+                print(f"{method}: Accuracy = {accuracy*100:.2f}%")
+                
+    except Exception as e:
+        print(f"Classifier analysis failed: {e}")
+        import traceback
+        traceback.print_exc()
+
     print("\n" + "=" * 60)
     print("COMPLETED")
     print("=" * 60)

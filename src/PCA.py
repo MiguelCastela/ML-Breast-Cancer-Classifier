@@ -10,7 +10,7 @@ global_X = None
 global_y = None
 
 #---------PCA---------
-def pca_analysis(dados):
+def pca_analysis(dados, variance_threshold=0.95):
     global global_pca, global_X, global_y
     
     X=dados.to_numpy()[:,:-1] #todas as colunas menos a última 
@@ -34,7 +34,15 @@ def pca_analysis(dados):
     print("PCA eigenvalues/Explained variance")
     print(pca_model.explained_variance_)
     print("Sum of eigenvalues="+str(np.sum(pca_model.explained_variance_)))
-    print("cumulative explained variance ratio" + str(np.cumsum(pca_model.explained_variance_ratio_)))
+    cumulative_variance = np.cumsum(pca_model.explained_variance_ratio_)
+    print("cumulative explained variance ratio" + str(cumulative_variance))
+
+    n_components_95 = np.argmax(cumulative_variance >= variance_threshold) + 1
+    print(f"Number of components needed to explain {variance_threshold*100}% variance: {n_components_95}")
+    print(f"Actual variance explained by {n_components_95} components: {cumulative_variance[n_components_95-1]*100:.2f}%")
+
+    
+
     print("PCA eigenvectors/Principal components")
     W=pca_model.components_.T
     print(W)
@@ -46,14 +54,12 @@ def pca_analysis(dados):
     fig.show()
 
     
-    # Scree plot data
     evr = pca_model.explained_variance_ratio_
     df = pd.DataFrame({
         "PC": np.arange(1, len(evr)+1),
         "Explained Variance Ratio": evr
     })
     
-    # Scree plot
     fig = px.bar(df, x="PC", y="Explained Variance Ratio",
                  text=df["Explained Variance Ratio"].round(2),
                  title="PCA Scree Plot")
@@ -64,7 +70,7 @@ def pca_analysis(dados):
 
     
     
-    return pca_model, X, y
+    return evr, n_components_95, pca_model, X, y
 
 def pca_kaiser(dados):
     global global_X, global_y
@@ -79,17 +85,41 @@ def pca_kaiser(dados):
     fig.update_traces(marker_size=10)
     fig.show()
 
+    eigenvalues = global_pca.explained_variance_
+    evr = global_pca.explained_variance_ratio_
 
-    num_components = np.sum(global_pca.explained_variance_ > 1)
+
+
+
+    kaiser_indices = np.where(global_pca.explained_variance_ > 1)[0]  
+    print("Components with eigenvalues > 1:", kaiser_indices + 1)
+
+
+    num_components = len(kaiser_indices)
     print(f"Number of eigenvalues > 1 (Kaiser criterion): {num_components}")
 
-    kaiser_indices = np.where(global_pca.explained_variance_ > 1)[0] + 1  # +1 to make them 1-indexed (PC1, PC2, ...)
-    print("Components with eigenvalues > 1:", kaiser_indices)
+    variance_retained = (np.sum(global_pca.explained_variance_[kaiser_indices] ** 2) / np.sum(global_pca.explained_variance_ ** 2)) * 100
+    
 
-    variance_retained = (np.sum(global_pca.explained_variance_[kaiser_indices - 1] ** 2) / np.sum(global_pca.explained_variance_ ** 2)) * 100
-    print(f"Variance retained according to Kaiser: {variance_retained:.2f}%")
+    """
+    variance_retained = (np.sum(global_pca.explained_variance_[kaiser_indices]) /
+                     np.sum(global_pca.explained_variance_)) * 100
+                     """
+    
 
-    #plot projected data according kaiser criterion
+    print(f"Variance retained according to Kaiser (manual): {variance_retained:.2f}%")
+
+
+    
+
+    """
+    variance_retained = np.sum(evr[kaiser_indices]) * 100
+    
+
+    print(f"\nTotal variance retained (Kaiser): {variance_retained:.2f}%")
+    """
+
+    #plot projected data according kaiser criterion 
     pca_kaiser = PCA(n_components=1)
     X1D = pca_kaiser.fit_transform(global_X)
     print(np.shape(X1D))
@@ -98,6 +128,8 @@ def pca_kaiser(dados):
     fig.update_traces(marker_size=8)
     fig.update_xaxes(title_text="PC1")
     fig.show()
+
+    return num_components, kaiser_indices, evr[kaiser_indices]
 
 
 
@@ -108,7 +140,8 @@ def pca_scree(dados):
     # If pca_analysis hasn't been run yet, run it first
     if global_pca is None:
         pca_analysis(dados)
+
+    print("Accourding to Scree we can subjectively say that the eighenvalue plot is never constant to decide on a number of components to retain.")
     
-    #Scree plot
 
 

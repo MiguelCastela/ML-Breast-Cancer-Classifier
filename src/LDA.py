@@ -19,7 +19,15 @@ def lda_analysis(dados, ixHealthy, ixCancer):
     lda = LinearDiscriminantAnalysis()
     lda.fit(X,y)
     # apply transform to dataset
-    transformed = lda.transform(X)
+    transformed = lda.transform(X)  
+
+    LD1 = transformed[:, 0]  # First linear discriminant
+
+    print("LDA scalings (eigenvectors)")
+    print(lda.scalings_)
+    print("LDA explained variance ratio")
+    print(lda.explained_variance_ratio_)
+
 
     #Plot transformed data
     fig=px.scatter(x=transformed[:,0],y=np.zeros(np.shape(X)[0]),color=y,labels=dict(x="LDA1" ,color="Class"), title ="LDA - Projection onto LDA1")
@@ -45,4 +53,6 @@ def lda_analysis(dados, ixHealthy, ixCancer):
     fig.show()
 
     """
+
+    return LD1
 

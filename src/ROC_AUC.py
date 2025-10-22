@@ -76,6 +76,8 @@ def roc_auc_analysis(dados, ixHealthy, ixCancer, fnames):
     for i in sortIx:
         print(fnames[i]+"-->"+str(roc_auc[i]))
 
+    return roc_auc
+
 
 def correlation_matrix(dados, Hs):
 #------CORRELATION MATRIX-------
