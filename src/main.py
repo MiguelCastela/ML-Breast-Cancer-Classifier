@@ -1,4 +1,4 @@
-from data_loader import dados, ixHealthy, ixCancer, fnames, Classes
+from data_loader import dados, ixHealthy, ixCancer, fnames, Classes, train_data, test_data, ixHealthy_train, ixCancer_train, ixHealthy_test, ixCancer_test
 import ROC_AUC as roc_auc_module
 import kruskal_wallis as kruskal_wallis_module
 from PCA import pca_analysis, pca_scree, pca_kaiser 
@@ -11,6 +11,8 @@ from classifiers import run_all_classifiers
 
 def main():
     """Main function that orchestrates all analyses"""
+
+    
     
     print("=" * 60)
     print("META 1")
@@ -28,7 +30,7 @@ def main():
     # Step 2: ROC-AUC Analysis
     print("\n2. ROC-AUC ANALYSIS")
     print("-" * 30)
-    roc = roc_auc_module.roc_auc_analysis(dados, ixHealthy, ixCancer, fnames)
+    roc = roc_auc_module.roc_auc_analysis(train_data, ixHealthy_train, ixCancer_train, fnames)
     top5_roc = [fnames[i] for i in roc.argsort()[-5:][::-1]]
     print("Top 5 features from ROC-AUC Analysis:", top5_roc)
     top5_roc_scores = [roc[i] for i in roc.argsort()[-5:][::-1]]
@@ -40,7 +42,7 @@ def main():
     # Step 3: Kruskal-Wallis Test
     print("\n3. KRUSKAL-WALLIS H-TEST")
     print("-" * 30)
-    H_results = kruskal_wallis_module.kruskal_wallis_test(dados, ixHealthy, ixCancer, fnames)
+    H_results = kruskal_wallis_module.kruskal_wallis_test(train_data, ixHealthy_train, ixCancer_train, fnames)
     top5_kruskall = [f[0] for f in H_results[:5]]
     print("Top 5 features from Kruskal-Wallis Test:", top5_kruskall)
     top5_kruskall_stats = [f[1] for f in H_results[:5]]
@@ -63,16 +65,22 @@ def main():
     print("\n4. PRINCIPAL COMPONENT ANALYSIS (PCA)")
     print("-" * 40)
     try:
-        evr, numpcs, pca_model, X, y = pca_analysis(dados)
+        evr, numpcs, pca_model, X, y = pca_analysis(train_data)
         top_pca = evr.argsort()[-numpcs:][::-1]
         top_pcs = [f"PC{i+1}" for i in top_pca]
         print("Top" + str(numpcs) + " principal components from PCA Analysis:", top_pcs , evr)
         X_pca = pca_model.transform(X)[:, :numpcs]  # shape: (n_samples, numpcs)
 
 
+        X_pca_test = pca_model.transform(test_data.to_numpy()[:, :-1])[:, :numpcs]  
+
+
+
+
+
         print("\n4.1 PCA SCREE PLOT")
         print("-" * 20)
-        num_kaiser, kaiser_indices, kaiser_evr = pca_kaiser(dados)
+        num_kaiser, kaiser_indices, kaiser_evr = pca_kaiser(train_data)
 
 
         print("\nTop PCs by Kaiser Criterion:")
@@ -81,7 +89,7 @@ def main():
 
         print("\n4.2 KAISER CRITERION PCA")
         print("-" * 25)
-        pca_scree(dados)
+        pca_scree(train_data)
 
     except Exception as e:
         print(f"PCA analysis failed: {e}")
@@ -90,7 +98,8 @@ def main():
     print("\n5. LINEAR DISCRIMINANT ANALYSIS (LDA)")
     print("-" * 40)
     try:
-        lda = lda_analysis(dados, ixHealthy, ixCancer)
+        lda = lda_analysis(train_data, ixHealthy_train, ixCancer_train)
+        lda_test = lda_analysis(test_data, ixHealthy_test, ixCancer_test)
         print("LDA for each sample    : ", lda)
     except Exception as e:
         print(f"LDA analysis failed: {e}")
@@ -103,10 +112,18 @@ def main():
         
         # Run all classifiers with the different feature selection results
         classifier_results = run_all_classifiers(
+            train_data=train_data,
+            test_data=test_data,
+            ixHealthy_train=ixHealthy_train,
+            ixCancer_train=ixCancer_train,
+            ixHealthy_test=ixHealthy_test,
+            ixCancer_test=ixCancer_test,
             top5_roc=top5_roc,
-            top5_kruskall=top5_kruskall, 
-            X_pca=X_pca,
-            LD1=lda  # You can specify LDA-selected features here if needed
+            top5_kruskall=top5_kruskall,
+            X_pca_train=X_pca,
+            X_pca_test=X_pca_test,
+            LD1_train=lda,
+            LD1_test=lda_test
         )
         
         print("\n" + "="*60)

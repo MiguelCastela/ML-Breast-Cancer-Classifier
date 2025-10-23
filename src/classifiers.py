@@ -2,19 +2,27 @@ import numpy as np
 import pandas as pd
 from data_loader import dados, ixHealthy, ixCancer, fnames, Classes
 
-def euclidean_distance(feature_names, method_name="Unknown", data=None):
+
+
+
+    # Extract data for selected features
+def train_euclidean_distance(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None):
     if data is None:
         data = dados
+    if ixHealthy is None or ixCancer is None:
+        ixHealthy = np.where(data["Classification"] == "Healthy")
+        ixCancer = np.where(data["Classification"] == "Cancer")
+
     """
     Euclidean distance classifier using selected features
     """
     print(f"\n=== EUCLIDEAN DISTANCE CLASSIFIER ({method_name}) ===")
     print(f"Using features: {feature_names}")
 
-
-    # Extract data for selected features
+    
     X_healthy = data[feature_names].iloc[ixHealthy[0]].values
     X_cancer = data[feature_names].iloc[ixCancer[0]].values
+
     
     # Calculate means for each class
     mu_healthy = np.mean(X_healthy, axis=0).reshape(-1, 1)
@@ -22,7 +30,31 @@ def euclidean_distance(feature_names, method_name="Unknown", data=None):
     
     print(f"Healthy mean: {mu_healthy.flatten()}")
     print(f"Cancer mean: {mu_cancer.flatten()}")
+
+    model = {
+        "feature_names": feature_names,
+        "mu_healthy": mu_healthy,
+        "mu_cancer": mu_cancer
+    }
+
+    return model
     
+def test_euclidean_distance(model, data=None , ixHealthy=None, ixCancer=None):
+
+    if data is None:
+        data = dados
+
+    if ixHealthy is None or ixCancer is None:
+        ixHealthy = np.where(data["Classification"] == "Healthy")
+        ixCancer = np.where(data["Classification"] == "Cancer")
+    
+    feature_names = model["feature_names"]
+    mu_healthy = model["mu_healthy"]
+    mu_cancer = model["mu_cancer"]
+
+    X_healthy = data[feature_names].iloc[ixHealthy[0]].values
+    X_cancer = data[feature_names].iloc[ixCancer[0]].values
+
     # Combine all data
     X = np.concatenate([X_healthy, X_cancer], axis=0)
     y_true = np.concatenate([np.zeros(len(X_healthy)), np.ones(len(X_cancer))])  # 0=Healthy, 1=Cancer
@@ -55,9 +87,13 @@ def euclidean_distance(feature_names, method_name="Unknown", data=None):
     
     return accuracy, sensitivity, specificity, precision, f1_score
 
-def mahalanobis_distance(feature_names, method_name="Unknown", data=None):
+def train_mahalanobis_distance(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None):
     if data is None:
         data = dados
+
+    if ixHealthy is None or ixCancer is None:
+        ixHealthy = np.where(data["Classification"] == "Healthy")
+        ixCancer = np.where(data["Classification"] == "Cancer")
     """
     Mahalanobis distance classifier using selected features
     """
@@ -79,7 +115,10 @@ def mahalanobis_distance(feature_names, method_name="Unknown", data=None):
         var_healthy = np.var(X_healthy, ddof=1)
         var_cancer = np.var(X_cancer, ddof=1)
         var_pooled = (var_healthy + var_cancer) / 2
-        is_1d = True
+        model = {   
+            "is_1d": True,
+            "var_pooled": var_pooled
+        }
     else:
         # Calculate covariance matrices
         C_healthy = np.cov(X_healthy.T)
@@ -94,24 +133,56 @@ def mahalanobis_distance(feature_names, method_name="Unknown", data=None):
         except np.linalg.LinAlgError:
             # Add small regularization if matrix is singular
             C_inv = np.linalg.inv(C_pooled + np.eye(C_pooled.shape[0]) * 1e-6)
-        is_1d = False
+        model = {
+            "is_1d": False,
+            "C_inv": C_inv
+        }
         
     print(f"Healthy mean: {mu_healthy.flatten()}")
     print(f"Cancer mean: {mu_cancer.flatten()}")
+
+
+    model.update({
+        "feature_names": feature_names,
+        "mu_healthy": mu_healthy,
+        "mu_cancer": mu_cancer,
+        })
+
+    return model
     
+
+
+def test_mahalanobis_distance(model, data=None , ixHealthy=None, ixCancer=None):
+
+    if data is None:
+        data = dados
+
+    if ixHealthy is None or ixCancer is None:
+        ixHealthy = np.where(data["Classification"] == "Healthy")
+        ixCancer = np.where(data["Classification"] == "Cancer")
+
+    feature_names = model["feature_names"]
+    mu_healthy = model["mu_healthy"]
+    mu_cancer = model["mu_cancer"]
+
+    X_healthy = data[feature_names].iloc[ixHealthy[0]].values
+    X_cancer = data[feature_names].iloc[ixCancer[0]].values
+
     # Combine all data
     X = np.concatenate([X_healthy, X_cancer], axis=0)
     y_true = np.concatenate([np.zeros(len(X_healthy)), np.ones(len(X_cancer))])  # 0=Healthy, 1=Cancer
     
     # Classification using Mahalanobis distance
     y_pred = np.zeros(len(X))
-    
-    for i, sample in enumerate(X):
-        if is_1d:
-            sample_val = sample[0]
-            dist_healthy = abs(sample_val - mu_healthy.flatten()[0]) / np.sqrt(var_pooled)
-            dist_cancer = abs(sample_val - mu_cancer.flatten()[0]) / np.sqrt(var_pooled)
-        else:
+    if model["is_1d"]:   
+        var_pooled = model["var_pooled"]
+        for i, sample in enumerate(X):
+                sample_val = sample[0]
+                dist_healthy = abs(sample_val - mu_healthy.flatten()[0]) / np.sqrt(var_pooled)
+                dist_cancer = abs(sample_val - mu_cancer.flatten()[0]) / np.sqrt(var_pooled)
+    else:
+        C_inv = model["C_inv"]
+        for i, sample in enumerate(X):
             diff_healthy = (sample - mu_healthy.flatten()).reshape(-1, 1)
             diff_cancer = (sample - mu_cancer.flatten()).reshape(-1, 1)
             dist_healthy = np.sqrt(diff_healthy.T @ C_inv @ diff_healthy)[0, 0]
@@ -140,9 +211,13 @@ def mahalanobis_distance(feature_names, method_name="Unknown", data=None):
     
     return accuracy, sensitivity, specificity, precision, f1_score
 
-def fisher_lda(feature_names, method_name="Unknown", data=None):
+def train_fisher_lda(feature_names, method_name="Unknown", data=None , ixHealthy=None, ixCancer=None):
     if data is None:
         data = dados
+
+    if ixHealthy is None or ixCancer is None:
+        ixHealthy = np.where(data["Classification"] == "Healthy")
+        ixCancer = np.where(data["Classification"] == "Cancer")
     """
     Fisher's Linear Discriminant Analysis classifier using selected features
     """
@@ -197,7 +272,41 @@ def fisher_lda(feature_names, method_name="Unknown", data=None):
     print(f"Cancer mean: {mu_cancer.flatten()}")
     print(f"LDA weights: {w.flatten()}")
     print(f"LDA bias: {b}")
-    
+
+
+    return{
+        "w": w,
+        "b": b,
+        "feature_names": feature_names,
+        "mu_healthy": mu_healthy,
+        "mu_cancer": mu_cancer
+    }
+
+
+
+def test_fisher_lda(model, data=None , ixHealthy=None, ixCancer=None):
+
+    if data is None:
+        data = dados
+
+    if ixHealthy is None or ixCancer is None:
+        ixHealthy = np.where(data["Classification"] == "Healthy")
+        ixCancer = np.where(data["Classification"] == "Cancer")
+
+
+    feature_names = model["feature_names"]
+    w = model["w"]
+    b = model["b"]
+
+
+    X_healthy = data[feature_names].iloc[ixHealthy[0]].values
+    X_cancer = data[feature_names].iloc[ixCancer[0]].values
+
+
+    X = np.concatenate([X_healthy, X_cancer], axis=0)
+    y_true = np.concatenate([np.zeros(len(X_healthy)), np.ones(len(X_cancer))])  # 0=Healthy, 1=Cancer
+
+
     # Classification using Fisher's LDA
     y_pred = np.zeros(len(X))
     decision_values = (X @ w).flatten() + b
@@ -224,41 +333,69 @@ def fisher_lda(feature_names, method_name="Unknown", data=None):
     return accuracy, sensitivity, specificity, precision, f1_score
 
 
-def run_all_classifiers(top5_roc=None, top5_kruskall=None, X_pca=None, LD1=None):
+def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, ixHealthy_test, ixCancer_test, top5_roc=None, top5_kruskall=None, X_pca_train=None, X_pca_test=None, LD1_train=None, LD1_test=None):
     """
-    Run classifiers using different feature sets:
+    Run classifiers using different feature sets and train/test split:
+    - train_data / test_data: pandas DataFrames with the same columns
     - top5_roc / top5_kruskall: lists of column names from original dataframe
-    - X_pca: numpy array of shape (n_samples, n_pcs)
-    - LD1: numpy array of shape (n_samples,)
+    - X_pca_train / X_pca_test: numpy arrays for PCA features
+    - LD1_train / LD1_test: numpy arrays for LDA1 (1D) features
     """
     results = {}
-    y_true = dados.to_numpy()[:, -1]  # True labels
 
     # --- ROC-AUC selected features ---
     if top5_roc is not None:
-        results['roc_euclidean'] = euclidean_distance(top5_roc, "Top 5 ROC-AUC")
-        results['roc_mahalanobis'] = mahalanobis_distance(top5_roc, "Top 5 ROC-AUC")
-        results['roc_fisher'] = fisher_lda(top5_roc, "Top 5 ROC-AUC")
+        model = train_euclidean_distance(top5_roc, data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
+        results['roc_euclidean'] = test_euclidean_distance(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
+
+        model = train_mahalanobis_distance(top5_roc, data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
+        results['roc_mahalanobis'] = test_mahalanobis_distance(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
+
+        model = train_fisher_lda(top5_roc, data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
+        results['roc_fisher'] = test_fisher_lda(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
 
     # --- Kruskal-Wallis selected features ---
     if top5_kruskall is not None:
-        results['kw_euclidean'] = euclidean_distance(top5_kruskall, "Top 5 Kruskal-Wallis")
-        results['kw_mahalanobis'] = mahalanobis_distance(top5_kruskall, "Top 5 Kruskal-Wallis")
-        results['kw_fisher'] = fisher_lda(top5_kruskall, "Top 5 Kruskal-Wallis")
+        model = train_euclidean_distance(top5_kruskall, data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
+        results['kw_euclidean'] = test_euclidean_distance(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
 
-    if X_pca is not None:
-        df_pca = pd.DataFrame(X_pca, columns=[f"PC{i+1}" for i in range(X_pca.shape[1])])
-        pca_features = list(df_pca.columns)
-        
-        results['pca_euclidean'] = euclidean_distance(pca_features, "Top PCA", data=df_pca)
-        results['pca_mahalanobis'] = mahalanobis_distance(pca_features, "Top PCA", data=df_pca)
-        results['pca_fisher'] = fisher_lda(pca_features, "Top PCA", data=df_pca)
+        model = train_mahalanobis_distance(top5_kruskall, data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
+        results['kw_mahalanobis'] = test_mahalanobis_distance(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
 
-# LDA first component (1D)
-    if LD1 is not None:
-        df_lda = pd.DataFrame(LD1, columns=['LD1'])
-        results['lda_euclidean'] = euclidean_distance(['LD1'], "LDA1", data=df_lda)
-        results['lda_fisher'] = fisher_lda(['LD1'], "LDA1", data=df_lda)
-        results['lda_mahalanobis'] = mahalanobis_distance(['LD1'], "LDA1", data=df_lda)
+        model = train_fisher_lda(top5_kruskall, data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
+        results['kw_fisher'] = test_fisher_lda(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
+
+    # --- PCA features ---
+    if X_pca_train is not None and X_pca_test is not None:
+        df_pca_train = pd.DataFrame(X_pca_train, columns=[f"PC{i+1}" for i in range(X_pca_train.shape[1])])
+        df_pca_test = pd.DataFrame(X_pca_test, columns=[f"PC{i+1}" for i in range(X_pca_test.shape[1])])
+        pca_features = list(df_pca_train.columns)
+
+        model = train_euclidean_distance(pca_features, data=df_pca_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
+        results['pca_euclidean'] = test_euclidean_distance(model, data=df_pca_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
+
+        model = train_mahalanobis_distance(pca_features, data=df_pca_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
+        results['pca_mahalanobis'] = test_mahalanobis_distance(model, data=df_pca_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
+
+        model = train_fisher_lda(pca_features, data=df_pca_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
+        results['pca_fisher'] = test_fisher_lda(model, data=df_pca_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
+
+    # --- LDA first component (1D) ---
+    if LD1_train is not None and LD1_test is not None:
+        df_lda_train = pd.DataFrame(LD1_train, columns=['LD1'])
+        df_lda_test = pd.DataFrame(LD1_test, columns=['LD1'])
+
+        model = train_euclidean_distance(['LD1'], data=df_lda_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
+        results['lda_euclidean'] = test_euclidean_distance(model, data=df_lda_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
+
+        model = train_mahalanobis_distance(['LD1'], data=df_lda_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
+        results['lda_mahalanobis'] = test_mahalanobis_distance(model, data=df_lda_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
+
+        model = train_fisher_lda(['LD1'], data=df_lda_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
+        results['lda_fisher'] = test_fisher_lda(model, data=df_lda_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
 
     return results
+
+
+
+
