@@ -130,6 +130,9 @@ def main():
         print("CLASSIFIER RESULTS SUMMARY")
         print("="*60)
         
+
+        #ISTO NAO FUNCIONA, DA VALORES IGUAIS PARA TODOS OS CLASSIFICADORES
+        """
         # Print summary of results
         for method, results in classifier_results.items():
             if isinstance(results, dict) and 'test' in results:  # Fisher LDA returns train/test
@@ -138,6 +141,7 @@ def main():
             elif isinstance(results, tuple):  # Other classifiers return single metrics
                 accuracy = results[0]
                 print(f"{method}: Accuracy = {accuracy*100:.2f}%")
+        """
                 
     except Exception as e:
         print(f"Classifier analysis failed: {e}")
