@@ -1,6 +1,7 @@
-\documentclass[a4paper,10pt]{article}
+\documentclass[a4paper,12pt]{article}
 \usepackage{graphicx} % Required for inserting images
 \begin{document}
+\date{}
 
 \begin{titlepage}
     \centering
@@ -27,5 +28,56 @@
     
     {October, 2025 \par}
 \end{titlepage}
+
+
+\maketitle
+
+\section*{Introdução}
+
+Este trabalho tem como objetivo desenvolver um modelo de Machine Learning capaz de, a partir de dados obtidos de amostras sanguíneas, identificar de forma precisa os utentes com diagnóstico de cancro da mama.
+
+O dataset considerado neste trabalho é constituído por dados de 116 pacientes, sendo 64 diagnosticados com cancro da mama e 52 pertencentes ao grupo de controlo saudável. As nove variáveis analisadas incluem parâmetros demográficos e bioquímicos, nomeadamente a idade, o índice de massa corporal (BMI), a concentração de glicose e insulina, o valor de HOMA, e os níveis de leptina, adiponectina, resistina e MCP1.
+
+\section*{Métodos e Metodologias}
+
+-partição dos dados
+
+---
+
+É necessário fazer uma seleção e redução das features de forma a perceber o poder discriminativo das features, i.e., a sua relevância e também a sua redundância.
+
+-kruskal-williams
+
+teste estatístico não paramétrico usado para comparar três ou mais variáveis independentes, que avalia a relevância das features.
+
+-ROC, AUC
+
+-matriz de correlação
+
+-PCA
+
+Tem como objetivo encontrar um conjunto reduzido de novas variáveis com menos redundância, com perda mínima de informação, ou seja, perda mínima de variância.
+
+Projetam-se os dados em direções em que variam mais.
+
+Vetores próprios definem a orientação dos eixos da elipse.
+Valores próprios são as variâncias ao longo das direções apontadas.
+
+
+-LDA
+
+O objetivo é é separar as amostras em grupos distintos colocando-os num espaço maximizando a separabilidade entre classes e minimizando a variabilidade dentro da mesma classe. A ideia é projetar os dados de acordo com estas condições.
+
+-distância euclidiana
+
+
+-mahalanobis
+
+
+-fisher LDA
+
+\section*{Resultados Preliminares}
+
+
 
 \end{document}
