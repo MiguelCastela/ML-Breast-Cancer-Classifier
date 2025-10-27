@@ -42,6 +42,8 @@ O dataset considerado neste trabalho é constituído por dados de 116 pacientes,
 
 -partição dos dados
 
+os dados foram divididos em dados de treino (70\%)e dados de teste (30\%)
+
 ---
 
 É necessário fazer uma seleção e redução das features de forma a perceber o poder discriminativo das features, i.e., a sua relevância e também a sua redundância.
@@ -50,9 +52,15 @@ O dataset considerado neste trabalho é constituído por dados de 116 pacientes,
 
 teste estatístico não paramétrico usado para comparar três ou mais variáveis independentes, que avalia a relevância das features.
 
+Para aplicar este teste usámos a função do python stats.kruskal, que às features vai selecionar as que são classificadas como saudável ou cancerígena.
+
 -ROC, AUC
 
+Método interessante para problemas de duas classes. A curva ROC representa a proproção de deteções positivas corretas (sensibilidade) em função da taxa de falsos positivos (1-especificidade).
+
 -matriz de correlação
+
+Indica como as variáveis variam e co-variam.
 
 -PCA
 
@@ -63,6 +71,12 @@ Projetam-se os dados em direções em que variam mais.
 Vetores próprios definem a orientação dos eixos da elipse.
 Valores próprios são as variâncias ao longo das direções apontadas.
 
+--> Critério de Scree
+quando o plot estabiliza
+
+--> Critério de Kaiser
+para dados normalizados, quando um valor próprio vai abaixo de 1
+
 
 -LDA
 
@@ -70,11 +84,21 @@ O objetivo é é separar as amostras em grupos distintos colocando-os num espaç
 
 -distância euclidiana
 
+\[
+||x-m||_e = \sqrt{\sum_{i=1}^{d} (x_i - m_i)^2}
+\]
 
 -mahalanobis
 
+Métrica sofisticada que se ajusta a vários formatos de distribuição de dados.
+
+\[
+||x-y||_m = \sqrt{(\mathbf{x} - \mathbf{y})^{T} \, \mathbf{C}^{-1} \, (\mathbf{x} - \mathbf{y})}
+\]
 
 -fisher LDA
+
+Este classificador combina o método LDA com o método de Mahalanobis.
 
 \section*{Resultados Preliminares}
 
