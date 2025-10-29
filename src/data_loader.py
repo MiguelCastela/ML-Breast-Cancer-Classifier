@@ -2,7 +2,6 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler  # <--- add this
 
 
 #Get path to the data file
@@ -25,8 +24,8 @@ dados['Classification'].iloc[ixCancer]=Classes[1]
 
 fnames=dados.columns[0:-1]
 
-scaler = StandardScaler()
-dados[fnames] = scaler.fit_transform(dados[fnames])
+
+
 
 # Separate features (X) and labels (y)
 X = dados[fnames]
@@ -37,8 +36,14 @@ X_train, X_temp, y_train, y_temp = train_test_split(
     X, y,
     test_size=0.30,       # 30% left for test+validation
     stratify=y,           # maintain class proportions
-    random_state=5
+    random_state=42
 )
+
+mu = X_train.mean(axis=0)
+st = X_train.std(axis=0)
+
+# Normalize training data
+X_train = (X_train - mu) / st
 
 # 2️⃣ Second split: split the temporary set into 15% test, 15% validation
 # (i.e., split 30% into 50/50 halves)
@@ -46,8 +51,11 @@ X_val, X_test, y_val, y_test = train_test_split(
     X_temp, y_temp,
     test_size=0.5,        # half of 30% = 15%
     stratify=y_temp,      # maintain class proportions again
-    random_state=5
+    random_state=23
 )
+
+X_val = (X_val - mu) / st
+X_test = (X_test - mu) / st
 
 # Merge X_train and y_train back into a single DataFrame
 train_data = X_train.copy()

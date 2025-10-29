@@ -13,7 +13,8 @@ def main():
     """Main function that orchestrates all analyses"""
 
     
-    
+    all_features = list(fnames)
+
     print("=" * 60)
     print("META 1")
     print("=" * 60)
@@ -118,6 +119,7 @@ def main():
             ixCancer_train=ixCancer_train,
             ixHealthy_test=ixHealthy_test,
             ixCancer_test=ixCancer_test,
+            all_features=all_features,
             top5_roc=top5_roc,
             top5_kruskall=top5_kruskall,
             X_pca_train=X_pca,
@@ -131,18 +133,7 @@ def main():
         print("="*60)
         
 
-        #ISTO NAO FUNCIONA, DA VALORES IGUAIS PARA TODOS OS CLASSIFICADORES
-        """
-        # Print summary of results
-        for method, results in classifier_results.items():
-            if isinstance(results, dict) and 'test' in results:  # Fisher LDA returns train/test
-                accuracy = results['test'][0]
-                print(f"{method}: Test Accuracy = {accuracy*100:.2f}%")
-            elif isinstance(results, tuple):  # Other classifiers return single metrics
-                accuracy = results[0]
-                print(f"{method}: Accuracy = {accuracy*100:.2f}%")
-        """
-                
+
     except Exception as e:
         print(f"Classifier analysis failed: {e}")
         import traceback
@@ -154,21 +145,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# ✅ TESTE OPCIONAL: Comparar distância manual vs scipy
-    print("\n[DEBUG] Verificação de distância Euclidiana")
-    from scipy.spatial.distance import euclidean
-    import numpy as np
-
-    # Supondo que tens as médias já calculadas (mu_healthy e mu_cancer)
-    # Aqui uso dados de treino só para ilustrar
-    X = train_data.to_numpy()[:, :-1]
-    mu_healthy = np.mean(X[ixHealthy_train], axis=0)
-    mu_cancer = np.mean(X[ixCancer_train], axis=0)
-
-    diffs = []
-    for sample in X[:10]:  # verifica nas primeiras 10 amostras
-        d_manual = np.linalg.norm(sample - mu_healthy)
-        d_scipy = euclidean(sample, mu_healthy)
-        diffs.append(abs(d_manual - d_scipy))
-    print(f"Média da diferença entre métodos: {np.mean(diffs):.6e}")

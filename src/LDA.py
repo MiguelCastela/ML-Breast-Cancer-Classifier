@@ -10,10 +10,6 @@ def lda_analysis(dados, ixHealthy, ixCancer):
     X=dados.to_numpy()[:,:-1] #todas as colunas menos a última 
     y=dados.to_numpy()[:,-1] #só a coluna da Classificação
 
-    X=X.astype(float)
-
-    #Normalize
-    X=(X-np.mean(X,axis=0))/np.std(X,axis=0)
 
     # prepare transform on dataset
     lda = LinearDiscriminantAnalysis()

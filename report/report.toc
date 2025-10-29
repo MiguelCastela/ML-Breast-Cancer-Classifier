@@ -1,0 +1,14 @@
+\contentsline {section}{\numberline {1}Introduction}{2}{}%
+\contentsline {section}{\numberline {2}Methods and Methodologies}{2}{}%
+\contentsline {subsection}{\numberline {2.1}Data Partitioning}{2}{}%
+\contentsline {subsection}{\numberline {2.2}Feature Selection and Reduction}{2}{}%
+\contentsline {subsubsection}{\numberline {2.2.1}Kruskal-Wallis Test}{2}{}%
+\contentsline {subsubsection}{\numberline {2.2.2}ROC Curve and AUC}{3}{}%
+\contentsline {subsubsection}{\numberline {2.2.3}Correlation Matrix}{3}{}%
+\contentsline {subsubsection}{\numberline {2.2.4}Principal Component Analysis (PCA)}{3}{}%
+\contentsline {subsubsection}{\numberline {2.2.5}Linear Discriminant Analysis (LDA)}{4}{}%
+\contentsline {subsection}{\numberline {2.3}Classifiers}{4}{}%
+\contentsline {subsubsection}{\numberline {2.3.1}Euclidean Distance Classifier}{4}{}%
+\contentsline {subsubsection}{\numberline {2.3.2}Mahalanobis Distance Classifier}{4}{}%
+\contentsline {subsubsection}{\numberline {2.3.3}Fisher LDA Classifier}{4}{}%
+\contentsline {section}{\numberline {3}First Results}{5}{}%
