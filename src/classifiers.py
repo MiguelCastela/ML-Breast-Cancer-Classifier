@@ -5,7 +5,6 @@ from scipy.spatial.distance import mahalanobis
 
 
 
-
     # Extract data for selected features
 def train_euclidean_distance(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None):
     if data is None:
@@ -442,6 +441,8 @@ def test_fisher_lda(model, data=None , ixHealthy=None, ixCancer=None):
 
 
 def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, ixHealthy_test, ixCancer_test, top5_roc=None, top5_kruskall=None, X_pca_train=None, X_pca_test=None, LD1_train=None, LD1_test=None):
+   
+
     """
     Run classifiers using different feature sets and train/test split:
     - train_data / test_data: pandas DataFrames with the same columns
@@ -527,7 +528,4 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
         results['lda_fisher'] = test_fisher_lda(model, data=df_lda_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
 
     return results
-
-
-
 

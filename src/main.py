@@ -154,3 +154,21 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# ✅ TESTE OPCIONAL: Comparar distância manual vs scipy
+    print("\n[DEBUG] Verificação de distância Euclidiana")
+    from scipy.spatial.distance import euclidean
+    import numpy as np
+
+    # Supondo que tens as médias já calculadas (mu_healthy e mu_cancer)
+    # Aqui uso dados de treino só para ilustrar
+    X = train_data.to_numpy()[:, :-1]
+    mu_healthy = np.mean(X[ixHealthy_train], axis=0)
+    mu_cancer = np.mean(X[ixCancer_train], axis=0)
+
+    diffs = []
+    for sample in X[:10]:  # verifica nas primeiras 10 amostras
+        d_manual = np.linalg.norm(sample - mu_healthy)
+        d_scipy = euclidean(sample, mu_healthy)
+        diffs.append(abs(d_manual - d_scipy))
+    print(f"Média da diferença entre métodos: {np.mean(diffs):.6e}")

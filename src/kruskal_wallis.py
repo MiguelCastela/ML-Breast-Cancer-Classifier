@@ -16,6 +16,5 @@ def kruskal_wallis_test(dados, ixHealthy, ixCancer, fnames):
     for f in Hs:
         print(f"Feature: {f[0]}, H-statistic: {f[1]:.4f}")
 
-
     
     return Hs
