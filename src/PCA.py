@@ -18,11 +18,6 @@ def pca_analysis(dados, variance_threshold=0.95):
 
     X=X.astype(float)
     
-    #Normalize
-    mu = np.mean(X, axis=0)
-    st = np.std(X, axis=0)
-    X=(X-mu)/st
-
     pca_model = PCA()
     pca_model.fit(X)
     
