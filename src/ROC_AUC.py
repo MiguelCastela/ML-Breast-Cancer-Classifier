@@ -84,4 +84,5 @@ def correlation_matrix(dados, Hs):
 
     corrMat=np.corrcoef(X)
     fig= px.imshow(corrMat, x=[Hs[0][0],Hs[1][0],Hs[2][0],Hs[3][0],Hs[4][0],Hs[5][0],Hs[6][0],Hs[7][0],Hs[8][0]], y=[Hs[0][0],Hs[1][0],Hs[2][0],Hs[3][0],Hs[4][0],Hs[5][0],Hs[6][0],Hs[7][0],Hs[8][0]], color_continuous_scale='RdBu', title='Correlation Matrix of Top 9 Features')
-    fig.show()
+    #fig.show()
+    fig.write_image("plots/correlation_matrix_top9_features.png")

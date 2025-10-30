@@ -42,7 +42,8 @@ def pca_analysis(dados, variance_threshold=0.95):
 
     fig=px.scatter(x=Xp,y=np.zeros(np.shape(X)[0]),color=y,labels=dict(x="PC1",y="",color="Class"), title="PCA - Projection onto PC1")
     fig.update_traces(marker_size=5)
-    fig.show()
+    #fig.show()
+    fig.write_html("plots/pca_scatter_plot.html")
 
     
     evr = pca_model.explained_variance_ratio_
@@ -53,10 +54,12 @@ def pca_analysis(dados, variance_threshold=0.95):
     
     fig = px.bar(df, x="PC", y="Explained Variance Ratio",
                  text=df["Explained Variance Ratio"].round(2),
-                 title="PCA Scree Plot")
+                 title="PCA Explained Variance Ratio per Principal Component")
     fig.update_traces(textposition='outside')
     fig.update_layout(yaxis=dict(title="Explained Variance Ratio"), xaxis=dict(title="Principal Component"))
-    fig.show()
+    #fig.show()
+    fig.write_html("plots/explained_variance.html")
+    
     
 
     
@@ -117,7 +120,8 @@ def pca_kaiser(dados):
     fig=px.scatter(x=X1D[:,0],y=np.zeros(np.shape(X1D)[0]),color=global_y,labels=dict(x="PC1",y="",color="Class"), title ="Kaiser Criterion PCA - Projection onto PC1")
     fig.update_traces(marker_size=8)
     fig.update_xaxes(title_text="PC1")
-    fig.show()
+    #fig.show()
+    fig.write_html("plots/kaiser_pca_scatter_plot.html")
 
     return num_components, kaiser_indices, evr[kaiser_indices]
 
