@@ -4,11 +4,9 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
-#Get path to the data file
 script_dir = os.path.dirname(os.path.abspath(__file__))
 file_path = os.path.join(script_dir, "data", "dataR2.xlsx")
 
-#Read XLS
 xlsFile=pd.read_excel(file_path,usecols=["Age","BMI","Glucose","Insulin","HOMA","Leptin","Adiponectin","Resistin","MCP.1","Classification"])
 dados=pd.DataFrame(data=xlsFile.dropna())
 
@@ -27,16 +25,14 @@ fnames=dados.columns[0:-1]
 
 
 
-# Separate features (X) and labels (y)
 X = dados[fnames]
 y = dados["Classification"]
 
-# 1️⃣ First split: 70% training, 30% temporary (test + validation)
 X_train, X_temp, y_train, y_temp = train_test_split(
     X, y,
     test_size=0.30,       # 30% left for test+validation
     stratify=y,           # maintain class proportions
-    random_state=42
+    random_state=31
 )
 
 mu = X_train.mean(axis=0)
@@ -45,13 +41,12 @@ st = X_train.std(axis=0)
 # Normalize training data
 X_train = (X_train - mu) / st
 
-# 2️⃣ Second split: split the temporary set into 15% test, 15% validation
-# (i.e., split 30% into 50/50 halves)
+
 X_val, X_test, y_val, y_test = train_test_split(
     X_temp, y_temp,
-    test_size=0.5,        # half of 30% = 15%
+    test_size=0.5,        # half of 30% for validation and half for testing
     stratify=y_temp,      # maintain class proportions again
-    random_state=23
+    random_state=31
 )
 
 X_val = (X_val - mu) / st
@@ -61,7 +56,6 @@ X_test = (X_test - mu) / st
 train_data = X_train.copy()
 train_data['Classification'] = y_train.values
 
-# Combine validation and test sets for evaluation
 test_data = pd.concat([X_val, X_test], axis=0)
 test_labels = pd.concat([y_val, y_test], axis=0)
 test_data['Classification'] = test_labels.values

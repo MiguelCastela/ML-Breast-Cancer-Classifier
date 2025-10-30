@@ -4,24 +4,20 @@ import plotly.express as px
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import pandas as pd
 
-# Global variables to store PCA results for use across functions
 global_pca = None
 global_X = None
 global_y = None
 
-#---------PCA---------
 def pca_analysis(dados, variance_threshold=0.95):
     global global_pca, global_X, global_y
     
-    X=dados.to_numpy()[:,:-1] #todas as colunas menos a última 
-    y=dados.to_numpy()[:,-1] #só a coluna da Classificação
-
+    X=dados.to_numpy()[:,:-1]
+    y=dados.to_numpy()[:,-1] 
     X=X.astype(float)
     
     pca_model = PCA()
     pca_model.fit(X)
     
-    # Store for use in other functions
     global_pca = pca_model
     global_X = X
     global_y = y
@@ -70,7 +66,6 @@ def pca_analysis(dados, variance_threshold=0.95):
 def pca_kaiser(dados):
     global global_X, global_y
     
-    # If pca_analysis hasn't been run yet, run it first
     if global_X is None or global_y is None:
         pca_analysis(dados)
     
@@ -132,7 +127,6 @@ def pca_kaiser(dados):
 def pca_scree(dados):
     global global_pca
     
-    # If pca_analysis hasn't been run yet, run it first
     if global_pca is None:
         pca_analysis(dados)
 

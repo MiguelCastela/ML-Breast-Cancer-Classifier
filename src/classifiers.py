@@ -222,13 +222,8 @@ def train_fisher_lda(feature_names, method_name="Unknown", data=None , ixHealthy
     # Total within-class scatter matrix
     S_w = S_healthy + S_cancer
     
-    # Handle singular matrix case
-    if len(feature_names) == 1:
-        # within-class scatter as sum of variances
-        S_w_scalar = np.var(X_healthy, ddof=1) * (len(X_healthy)-1) + np.var(X_cancer, ddof=1) * (len(X_cancer)-1)
-        S_w_inv = np.array([[1.0 / S_w_scalar]])
-    else:
-        S_w_inv = np.linalg.inv(S_w)
+
+    S_w_inv = np.linalg.inv(S_w)
 
 
     
@@ -277,18 +272,10 @@ def test_fisher_lda(model, data=None , ixHealthy=None, ixCancer=None):
     y_true = np.concatenate([np.zeros(len(X_healthy)), np.ones(len(X_cancer))])  # 0=Healthy, 1=Cancer
 
 
-    # Classification using Fisher's LDA
-    X = X.reshape(len(X), -1)  # (n_samples, n_features)
-
-# Ensure w is 2D column
-    w = model["w"].reshape(-1, 1)  # (n_features, 1)
-
-
     decision_values = (X @ w).flatten() + b
     y_pred = np.zeros(len(X))
     y_pred[decision_values > 0] = 1  # Cancer class
     
-    # Calculate metrics
     TP = np.sum((y_true == 1) & (y_pred == 1))  # Cancer correctly classified
     TN = np.sum((y_true == 0) & (y_pred == 0))  # Healthy correctly classified
     FP = np.sum((y_true == 0) & (y_pred == 1))  # Healthy misclassified as Cancer
@@ -324,26 +311,22 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
 
 
 
-    # Euclidean
     model = train_euclidean_distance(all_features, method_name="All Features", 
                                     data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
     results['all_euclidean'] = test_euclidean_distance(model, data=test_data, 
                                                     ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
 
-    # Mahalanobis
     model = train_mahalanobis_distance(all_features, method_name="All Features", 
                                     data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
     results['all_mahalanobis'] = test_mahalanobis_distance(model, data=test_data, 
                                                         ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
 
-    # Fisher LDA
     model = train_fisher_lda(all_features, method_name="All Features", 
                             data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
     results['all_fisher'] = test_fisher_lda(model, data=test_data, 
                                             ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
 
 
-    # --- ROC-AUC selected features ---
     
     if top5_roc is not None:
         model = train_euclidean_distance(top5_roc, method_name="ROC-AUC", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
@@ -355,7 +338,6 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
         model = train_fisher_lda(top5_roc, method_name="ROC-AUC", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
         results['roc_fisher'] = test_fisher_lda(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
 
-    # --- Kruskal-Wallis selected features ---
     if top5_kruskall is not None:
         model = train_euclidean_distance(top5_kruskall, method_name="Kruskal-Wallis", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
         results['kw_euclidean'] = test_euclidean_distance(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
@@ -366,7 +348,6 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
         model = train_fisher_lda(top5_kruskall, method_name="Kruskal-Wallis", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
         results['kw_fisher'] = test_fisher_lda(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
 
-    # --- PCA features ---
     if X_pca_train is not None and X_pca_test is not None:
         df_pca_train = pd.DataFrame(X_pca_train, columns=[f"PC{i+1}" for i in range(X_pca_train.shape[1])])
         df_pca_test = pd.DataFrame(X_pca_test, columns=[f"PC{i+1}" for i in range(X_pca_test.shape[1])])
@@ -381,7 +362,6 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
         model = train_fisher_lda(pca_features, method_name="PCA", data=df_pca_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
         results['pca_fisher'] = test_fisher_lda(model, data=df_pca_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
 
-    # --- LDA first component (1D) ---
     if LD1_train is not None and LD1_test is not None:
 
 

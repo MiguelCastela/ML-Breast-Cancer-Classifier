@@ -1,6 +1,5 @@
 import scipy.stats as stats
 
-#---------Kruskal-Wallis H-test---------
 def kruskal_wallis_test(dados, ixHealthy, ixCancer, fnames):
     H_rank=[]
 

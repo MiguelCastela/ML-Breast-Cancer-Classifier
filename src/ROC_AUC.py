@@ -5,13 +5,12 @@ from sklearn.metrics import roc_curve, auc
 import plotly.express as px 
 
 
-#---------ROC, AUC---------
-#Se AUC for a feature is 0.5, it means that the feature does not discriminate between the two classes
-# ou seja, a feature aumenta com Cancer
+
 def roc_auc_analysis(dados, ixHealthy, ixCancer, fnames):
     ixHealthyCancer=np.concatenate((ixHealthy[0],ixCancer[0]))
     y=dados['Classification'].to_numpy()[ixHealthyCancer]
     roc_auc=np.zeros(fnames.shape)
+    
 
     fig = make_subplots(
         rows=3, cols=3,
@@ -70,7 +69,8 @@ def roc_auc_analysis(dados, ixHealthy, ixCancer, fnames):
         showlegend=False
     )
     fig.show()
-
+    # Adjust ROC-AUC scores to be >= 0.5
+    roc_auc = np.maximum(roc_auc, 1 - roc_auc) 
     sortIx=np.flip(np.argsort(roc_auc))
     print("Sorting accourding to ROC-AUC:")
     for i in sortIx:
@@ -80,7 +80,6 @@ def roc_auc_analysis(dados, ixHealthy, ixCancer, fnames):
 
 
 def correlation_matrix(dados, Hs):
-#------CORRELATION MATRIX-------
     X=np.array([dados[Hs[0][0]],dados[Hs[1][0]],dados[Hs[2][0]],dados[Hs[3][0]],dados[Hs[4][0]],dados[Hs[5][0]],dados[Hs[6][0]],dados[Hs[7][0]],dados[Hs[8][0]]])
 
     corrMat=np.corrcoef(X)

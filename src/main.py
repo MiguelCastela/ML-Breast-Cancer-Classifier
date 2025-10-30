@@ -19,7 +19,6 @@ def main():
     print("META 1")
     print("=" * 60)
     
-    # Step 1: Data Loading (already done by importing data_loader)
     print("\n1. DATA LOADING")
     print("-" * 30)
     print(f"Dataset shape: {dados.shape}")
@@ -28,7 +27,6 @@ def main():
     print(f"Healthy samples: {len(ixHealthy[0])}")
     print(f"Cancer samples: {len(ixCancer[0])}")
     
-    # Step 2: ROC-AUC Analysis
     print("\n2. ROC-AUC ANALYSIS")
     print("-" * 30)
     roc = roc_auc_module.roc_auc_analysis(train_data, ixHealthy_train, ixCancer_train, fnames)
@@ -40,7 +38,6 @@ def main():
 
     
     
-    # Step 3: Kruskal-Wallis Test
     print("\n3. KRUSKAL-WALLIS H-TEST")
     print("-" * 30)
     H_results = kruskal_wallis_module.kruskal_wallis_test(train_data, ixHealthy_train, ixCancer_train, fnames)
@@ -49,11 +46,9 @@ def main():
     top5_kruskall_stats = [f[1] for f in H_results[:5]]
     print("Top 5 Kruskal-Wallis H-statistics:", top5_kruskall_stats)
 
-    # Create correlation matrix with top features from Kruskal-Wallis
     print("\n3.1 CORRELATION MATRIX OF TOP 9 FEATURES")
     print("-" * 40)
     try:
-        # Get top 9 features from Kruskal-Wallis results
         if H_results and len(H_results) > 0:
             top_features = H_results[:9] if len(H_results) >= 9 else H_results
             roc_auc_module.correlation_matrix(dados, top_features)
@@ -62,7 +57,6 @@ def main():
     except Exception as e:
         print(f"Could not create correlation matrix: {e}")
     
-    # Step 4: PCA Analysis
     print("\n4. PRINCIPAL COMPONENT ANALYSIS (PCA)")
     print("-" * 40)
     try:
@@ -95,7 +89,6 @@ def main():
     except Exception as e:
         print(f"PCA analysis failed: {e}")
     
-    # Step 5: LDA Analysis
     print("\n5. LINEAR DISCRIMINANT ANALYSIS (LDA)")
     print("-" * 40)
     try:
@@ -105,13 +98,11 @@ def main():
     except Exception as e:
         print(f"LDA analysis failed: {e}")
     
-    # Step 6: Run Classifiers with different feature selection methods
     print("\n6. CLASSIFIERS WITH DIFFERENT FEATURE SELECTIONS")
     print("-" * 50)
     try:
 
         
-        # Run all classifiers with the different feature selection results
         classifier_results = run_all_classifiers(
             train_data=train_data,
             test_data=test_data,
