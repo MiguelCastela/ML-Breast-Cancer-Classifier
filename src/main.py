@@ -75,7 +75,7 @@ def main():
 
         print("\n4.1 PCA SCREE PLOT")
         print("-" * 20)
-        num_kaiser, kaiser_indices, kaiser_evr = pca_kaiser(train_data)
+        num_kaiser, kaiser_indices, kaiser_evr = pca_kaiser(pca_model, X, y)
 
 
         print("\nTop PCs by Kaiser Criterion:")
@@ -84,7 +84,7 @@ def main():
 
         print("\n4.2 KAISER CRITERION PCA")
         print("-" * 25)
-        pca_scree(train_data)
+        pca_scree(pca_model)
 
     except Exception as e:
         print(f"PCA analysis failed: {e}")

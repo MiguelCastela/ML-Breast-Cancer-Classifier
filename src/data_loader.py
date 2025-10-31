@@ -17,8 +17,10 @@ ixCancer=np.where(dados['Classification']==2)
 Classes=["Healthy","Cancer"]
 
 #Transform the numeric class labels in string labels
-dados['Classification'].iloc[ixHealthy]=Classes[0]
-dados['Classification'].iloc[ixCancer]=Classes[1]
+dados['Classification'] = dados['Classification'].astype(object)
+
+dados.loc[dados['Classification'] == 1, 'Classification'] = Classes[0]
+dados.loc[dados['Classification'] == 2, 'Classification'] = Classes[1]
 
 fnames=dados.columns[0:-1]
 
@@ -32,7 +34,7 @@ X_train, X_temp, y_train, y_temp = train_test_split(
     X, y,
     test_size=0.30,       # 30% left for test+validation
     stratify=y,           # maintain class proportions
-    random_state=31
+    random_state=3222
 )
 
 mu = X_train.mean(axis=0)
@@ -46,7 +48,7 @@ X_val, X_test, y_val, y_test = train_test_split(
     X_temp, y_temp,
     test_size=0.5,        # half of 30% for validation and half for testing
     stratify=y_temp,      # maintain class proportions again
-    random_state=31
+    random_state=3132
 )
 
 X_val = (X_val - mu) / st
@@ -66,12 +68,10 @@ ixCancer_train = np.where(train_data['Classification'] == "Cancer")
 ixHealthy_test = np.where(test_data['Classification'] == "Healthy")
 ixCancer_test = np.where(test_data['Classification'] == "Cancer")
 
-# ✅ Check the resulting shapes
 print("Train shape:", train_data.shape)
 print("Validation shape:", X_val.shape)
 print("Test shape:", X_test.shape)
 
-# ✅ Optional: verify class balance
 print("\nClass distribution:")
 print("Train:\n", y_train.value_counts(normalize=True))
 print("Val:\n", y_val.value_counts(normalize=True))

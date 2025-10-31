@@ -1,2 +1,0 @@
-accuracy is bad for unbanlanced data
-o fisher LDA -> ir para um novo espaco onde os dados estao compactos e bem separados -> reduz a dimensionalidad e entao os pontos ficam mais discriminaveis sem overfitting

@@ -2,10 +2,7 @@ from xml.parsers.expat import model
 import numpy as np
 import pandas as pd
 from data_loader import dados, ixHealthy, ixCancer, fnames, Classes
-from scipy.spatial.distance import mahalanobis
-from scipy.spatial.distance import euclidean
-
-from scipy.spatial.distance import mahalanobis
+from sklearn.metrics import f1_score, roc_curve, auc
 import numpy as np
 
 
@@ -55,11 +52,13 @@ def test_euclidean_distance(model, data=None , ixHealthy=None, ixCancer=None):
     X = np.concatenate([X_healthy, X_cancer], axis=0)
     y_true = np.concatenate([np.zeros(len(X_healthy)), np.ones(len(X_cancer))])  # 0=Healthy, 1=Cancer
     # Classification using euclidean distance
+    dist_healthy = np.zeros(len(X))
+    dist_cancer = np.zeros(len(X))
     y_pred = np.zeros(len(X))
     for i, sample in enumerate(X):
-        dist_healthy = np.linalg.norm(sample - mu_healthy)
-        dist_cancer = np.linalg.norm(sample - mu_cancer)
-        y_pred[i] = 0 if dist_healthy < dist_cancer else 1
+        dist_healthy[i] = np.linalg.norm(sample - mu_healthy)
+        dist_cancer[i] = np.linalg.norm(sample - mu_cancer)
+        y_pred[i] = 0 if dist_healthy[i] < dist_cancer[i] else 1
     # Calculate metrics
     TP = np.sum((y_true == 1) & (y_pred == 1))  # Cancer correctly classified
     TN = np.sum((y_true == 0) & (y_pred == 0))  # Healthy correctly classified
@@ -70,12 +69,20 @@ def test_euclidean_distance(model, data=None , ixHealthy=None, ixCancer=None):
     precision = TP / (TP + FP) if (TP + FP) > 0 else 0
     f1_score = 2 * (precision * sensitivity) / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
     accuracy = (TP + TN) / (TP + TN + FP + FN)
+
+    decision_scores = dist_healthy - dist_cancer
+
+    fpr, tpr, _ = roc_curve(y_true, decision_scores)
+    roc_auc = auc(fpr, tpr)
+
+
     print(f"Sensitivity (%) = {sensitivity * 100:.2f}")
     print(f"Specificity (%) = {specificity * 100:.2f}")
     print(f"Precision (%) = {precision * 100:.2f}")
     print(f"F1 Score (%) = {f1_score * 100:.2f}")
     print(f"Accuracy (%) = {accuracy * 100:.2f}")
-    return accuracy, sensitivity, specificity, precision, f1_score
+    print(f"ROC-AUC (%) = {roc_auc * 100:.2f}")
+    return accuracy, sensitivity, specificity, precision, f1_score, roc_auc
 
 
 def train_mahalanobis_distance(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None):
@@ -167,15 +174,18 @@ def test_mahalanobis_distance(model, data=None , ixHealthy=None, ixCancer=None):
     f1          = 2 * (precision * sensitivity) / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
     accuracy    = (TP + TN) / (TP + TN + FP + FN)
 
+    fpr, tpr, _ = roc_curve(y_true, dx)
+    roc_auc = auc(fpr, tpr)
+
     print(f"Sensitivity (%) = {sensitivity * 100:.2f}")
     print(f"Specificity (%) = {specificity * 100:.2f}")
     print(f"Precision (%) = {precision * 100:.2f}")
     print(f"F1 Score (%) = {f1 * 100:.2f}")
     print(f"Accuracy (%) = {accuracy * 100:.2f}")
+    print(f"ROC-AUC (%) = {roc_auc * 100:.2f}")
 
 
-    return accuracy, sensitivity, specificity, precision, f1
-
+    return accuracy, sensitivity, specificity, precision, f1, roc_auc
 
 
 def train_fisher_lda(feature_names, method_name="Unknown", data=None , ixHealthy=None, ixCancer=None):
@@ -286,14 +296,18 @@ def test_fisher_lda(model, data=None , ixHealthy=None, ixCancer=None):
     precision = TP / (TP + FP) if (TP + FP) > 0 else 0
     f1_score = 2 * (precision * sensitivity) / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
     accuracy = (TP + TN) / (TP + TN + FP + FN)
+    fpr, tpr, _ = roc_curve(y_true, decision_values)
+    roc_auc = auc(fpr, tpr)
+
     
     print(f"Sensitivity (%) = {sensitivity * 100:.2f}")
     print(f"Specificity (%) = {specificity * 100:.2f}")
     print(f"Precision (%) = {precision * 100:.2f}")
     print(f"F1 Score (%) = {f1_score * 100:.2f}")
     print(f"Accuracy (%) = {accuracy * 100:.2f}")
-    
-    return accuracy, sensitivity, specificity, precision, f1_score
+    print(f"ROC-AUC (%) = {roc_auc * 100:.2f}")
+
+    return accuracy, sensitivity, specificity, precision, f1_score, roc_auc
 
 
 def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, ixHealthy_test, ixCancer_test, all_features, top5_roc=None, top5_kruskall=None, X_pca_train=None, X_pca_test=None, LD1_train=None, LD1_test=None):
@@ -374,8 +388,5 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
 
         model = train_mahalanobis_distance(['LD1'], method_name="LDA", data=df_lda_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
         results['lda_mahalanobis'] = test_mahalanobis_distance(model, data=df_lda_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
-
-        model = train_fisher_lda(['LD1'], method_name="LDA", data=df_lda_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
-        results['lda_fisher'] = test_fisher_lda(model, data=df_lda_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
 
     return results

@@ -1,4 +1,0 @@
-1 -> Se antes de fazer o PCA , fazemos como o Jupyter em que temos um grafico com os datapoints e a seta discriminante
-2 -> Tabmém é preciso representar o kaiser num grafico? o que ta no jupyter são as formulas que é suposto usarmos?
-3 -> O que é suposto fazer de data partitioning para a entrega desta meta?            
-4 -> para fazer a performance metric de cada feature usamos O RESULTADO todos os testes?

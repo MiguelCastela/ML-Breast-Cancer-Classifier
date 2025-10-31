@@ -26,29 +26,28 @@ def lda_analysis(dados, ixHealthy, ixCancer):
 
 
     #Plot transformed data
-    fig=px.scatter(x=transformed[:,0],y=np.zeros(np.shape(X)[0]),color=y,labels=dict(x="LDA1" ,color="Class"), title ="LDA - Projection onto LDA1")
+    fig=px.scatter(x=transformed[:,0],y=np.zeros(np.shape(X)[0]),color=y,labels=dict(x="LDA1" ,color="Class"), title ="")
     fig.update_traces(marker_size=10)
-    fig.show()
-
-
-    """
-    plot_df = pd.DataFrame({
-    'LD1': transformed[:, 0],  # LDA first component
-    'Class': y
-    })
-
-    fig = px.strip(
-        plot_df,
-        x='LD1',
-        color='Class',
-        title="LDA Projection onto First Component"
+    fig.update_layout(
+        xaxis=dict(
+            title=dict(text="LDA1", font=dict(size=18)),  # X-axis title font
+            tickfont=dict(size=14)                        # X-axis tick font
+        ),
+        yaxis=dict(
+            title=dict(text=""),  # No title for y-axis (since it's just 0s)
+            tickfont=dict(size=14),
+            showticklabels=False  # Hide y-axis tick labels completely
+        ),
+        legend=dict(
+            font=dict(size=14),
+            title=dict(font=dict(size=16))
+        ),
+        margin=dict(l=40, r=20, t=40, b=40),  # tighten whitespace
+        autosize=True
     )
-
-    fig.update_traces(marker=dict(size=10, opacity=0.7))
-    fig.update_layout(yaxis_title="")
-    fig.show()
-
-    """
+    # fig.show()
+    fig.write_html("plots/lda_projection_onto_lda1.html")
+    
 
     return LD1
 
