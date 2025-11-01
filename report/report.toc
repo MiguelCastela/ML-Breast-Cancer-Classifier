@@ -5,10 +5,13 @@
 \contentsline {subsubsection}{\numberline {2.2.1}Kruskal-Wallis Test}{2}{}%
 \contentsline {subsubsection}{\numberline {2.2.2}ROC Curve and AUC}{3}{}%
 \contentsline {subsubsection}{\numberline {2.2.3}Correlation Matrix}{3}{}%
-\contentsline {subsubsection}{\numberline {2.2.4}Principal Component Analysis (PCA)}{3}{}%
-\contentsline {subsubsection}{\numberline {2.2.5}Linear Discriminant Analysis (LDA)}{4}{}%
-\contentsline {subsection}{\numberline {2.3}Classifiers}{4}{}%
-\contentsline {subsubsection}{\numberline {2.3.1}Euclidean Distance Classifier}{4}{}%
-\contentsline {subsubsection}{\numberline {2.3.2}Mahalanobis Distance Classifier}{4}{}%
-\contentsline {subsubsection}{\numberline {2.3.3}Fisher LDA Classifier}{4}{}%
-\contentsline {section}{\numberline {3}First Results}{5}{}%
+\contentsline {subsubsection}{\numberline {2.2.4}Principal Component Analysis (PCA)}{4}{}%
+\contentsline {subsubsection}{\numberline {2.2.5}Linear Discriminant Analysis (LDA)}{5}{}%
+\contentsline {subsection}{\numberline {2.3}Classifiers}{5}{}%
+\contentsline {subsubsection}{\numberline {2.3.1}Euclidean Distance Classifier}{5}{}%
+\contentsline {subsubsection}{\numberline {2.3.2}Mahalanobis Distance Classifier}{5}{}%
+\contentsline {subsubsection}{\numberline {2.3.3}Fisher LDA Classifier}{6}{}%
+\contentsline {subsubsection}{\numberline {2.3.4}ROC-AUC}{6}{}%
+\contentsline {subsection}{\numberline {2.4}Experimental Setup}{7}{}%
+\contentsline {section}{\numberline {3}First Results}{7}{}%
+\contentsline {section}{\numberline {4}Conclusion}{17}{}%
