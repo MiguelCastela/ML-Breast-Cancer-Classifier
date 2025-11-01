@@ -1,17 +1,19 @@
-\contentsline {section}{\numberline {1}Introduction}{2}{}%
-\contentsline {section}{\numberline {2}Methods and Methodologies}{2}{}%
-\contentsline {subsection}{\numberline {2.1}Data Partitioning}{2}{}%
-\contentsline {subsection}{\numberline {2.2}Feature Selection and Reduction}{2}{}%
-\contentsline {subsubsection}{\numberline {2.2.1}Kruskal-Wallis Test}{2}{}%
-\contentsline {subsubsection}{\numberline {2.2.2}ROC Curve and AUC}{3}{}%
-\contentsline {subsubsection}{\numberline {2.2.3}Correlation Matrix}{3}{}%
-\contentsline {subsubsection}{\numberline {2.2.4}Principal Component Analysis (PCA)}{4}{}%
-\contentsline {subsubsection}{\numberline {2.2.5}Linear Discriminant Analysis (LDA)}{5}{}%
-\contentsline {subsection}{\numberline {2.3}Classifiers}{5}{}%
-\contentsline {subsubsection}{\numberline {2.3.1}Euclidean Distance Classifier}{5}{}%
-\contentsline {subsubsection}{\numberline {2.3.2}Mahalanobis Distance Classifier}{5}{}%
-\contentsline {subsubsection}{\numberline {2.3.3}Fisher LDA Classifier}{6}{}%
-\contentsline {subsubsection}{\numberline {2.3.4}ROC-AUC}{6}{}%
-\contentsline {subsection}{\numberline {2.4}Experimental Setup}{7}{}%
-\contentsline {section}{\numberline {3}First Results}{7}{}%
-\contentsline {section}{\numberline {4}Conclusion}{17}{}%
+\contentsline {section}{\numberline {1}Introduction}{2}{section.1}%
+\contentsline {section}{\numberline {2}Methods and Methodologies}{2}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Data Partitioning}{2}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Feature Selection}{2}{subsection.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.1}Kruskal-Wallis Test}{2}{subsubsection.2.2.1}%
+\contentsline {subsubsection}{\numberline {2.2.2}ROC Curve and AUC}{3}{subsubsection.2.2.2}%
+\contentsline {subsubsection}{\numberline {2.2.3}Correlation Matrix}{3}{subsubsection.2.2.3}%
+\contentsline {subsection}{\numberline {2.3}Feature Reduction}{4}{subsection.2.3}%
+\contentsline {subsubsection}{\numberline {2.3.1}Principal Component Analysis (PCA)}{4}{subsubsection.2.3.1}%
+\contentsline {subsubsection}{\numberline {2.3.2}Linear Discriminant Analysis (LDA)}{5}{subsubsection.2.3.2}%
+\contentsline {subsection}{\numberline {2.4}Classifiers}{5}{subsection.2.4}%
+\contentsline {subsubsection}{\numberline {2.4.1}Euclidean Distance Classifier}{5}{subsubsection.2.4.1}%
+\contentsline {subsubsection}{\numberline {2.4.2}Mahalanobis Distance Classifier}{5}{subsubsection.2.4.2}%
+\contentsline {subsubsection}{\numberline {2.4.3}Fisher LDA Classifier}{6}{subsubsection.2.4.3}%
+\contentsline {subsection}{\numberline {2.5}Experimental Setup}{7}{subsection.2.5}%
+\contentsline {section}{\numberline {3}Result Analysis}{8}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Similarities between Mahalanobis and Fisher LDA classifiers}{17}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Fisher LDA not applied to LDA}{17}{subsection.3.2}%
+\contentsline {section}{\numberline {4}Conclusion}{18}{section.4}%
