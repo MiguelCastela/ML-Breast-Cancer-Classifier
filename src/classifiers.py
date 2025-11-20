@@ -1,15 +1,13 @@
 from xml.parsers.expat import model
 import numpy as np
 import pandas as pd
-from data_loader import dados, ixHealthy, ixCancer, fnames, Classes
 from sklearn.metrics import f1_score, roc_curve, auc
 import numpy as np
 
 
 
 def train_euclidean_distance(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None):
-    if data is None:
-        data = dados
+
     if ixHealthy is None or ixCancer is None:
         ixHealthy = np.where(data["Classification"] == "Healthy")
         ixCancer = np.where(data["Classification"] == "Cancer")
@@ -36,8 +34,6 @@ def train_euclidean_distance(feature_names, method_name="Unknown", data=None, ix
     return model
 
 def test_euclidean_distance(model, data=None , ixHealthy=None, ixCancer=None):
-    if data is None:
-        data = dados
 
     if ixHealthy is None or ixCancer is None:
         ixHealthy = np.where(data["Classification"] == "Healthy")
@@ -128,8 +124,7 @@ def test_mahalanobis_distance(model, data=None , ixHealthy=None, ixCancer=None):
     """
     Classifies test data using Mahalanobis discriminant and computes metrics.
     """
-    if data is None:
-        data = dados
+
 
     if ixHealthy is None or ixCancer is None:
         ixHealthy = np.where(data["Classification"] == "Healthy")
@@ -189,8 +184,6 @@ def test_mahalanobis_distance(model, data=None , ixHealthy=None, ixCancer=None):
 
 
 def train_fisher_lda(feature_names, method_name="Unknown", data=None , ixHealthy=None, ixCancer=None):
-    if data is None:
-        data = dados
 
     if ixHealthy is None or ixCancer is None:
         ixHealthy = np.where(data["Classification"] == "Healthy")
@@ -261,8 +254,6 @@ def train_fisher_lda(feature_names, method_name="Unknown", data=None , ixHealthy
 
 def test_fisher_lda(model, data=None , ixHealthy=None, ixCancer=None):
 
-    if data is None:
-        data = dados
 
     if ixHealthy is None or ixCancer is None:
         ixHealthy = np.where(data["Classification"] == "Healthy")
@@ -390,3 +381,46 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
         results['lda_mahalanobis'] = test_mahalanobis_distance(model, data=df_lda_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
 
     return results
+
+
+def run_classifiers_multiple_times(train_data, test_data, ixHealthy_train, ixCancer_train, ixHealthy_test, ixCancer_test,
+                                   all_features, top5_roc=None, top5_kruskall=None, X_pca_train=None, X_pca_test=None,
+                                   LD1_train=None, LD1_test=None, n_runs=5):
+    """
+    Run run_all_classifiers n_runs times and compute mean metrics.
+    """
+    all_results = {}
+
+    for run in range(n_runs):
+        print(f"\n--- Run {run + 1} ---")
+        results = run_all_classifiers(
+            train_data=train_data,
+            test_data=test_data,
+            ixHealthy_train=ixHealthy_train,
+            ixCancer_train=ixCancer_train,
+            ixHealthy_test=ixHealthy_test,
+            ixCancer_test=ixCancer_test,
+            all_features=all_features,
+            top5_roc=top5_roc,
+            top5_kruskall=top5_kruskall,
+            X_pca_train=X_pca_train,
+            X_pca_test=X_pca_test,
+            LD1_train=LD1_train,
+            LD1_test=LD1_test
+        )
+
+        for key, metrics in results.items():
+            if key not in all_results:
+                all_results[key] = []
+            all_results[key].append(metrics)
+
+    # Compute mean metrics
+    mean_results = {k: tuple(np.mean(v, axis=0)) for k, v in all_results.items()}
+
+    # Print mean results
+    print("\n=== Average metrics over", n_runs, "runs ===")
+    for clf, metrics in mean_results.items():
+        print(f"{clf}: Accuracy={metrics[0]:.3f}, Sensitivity={metrics[1]:.3f}, Specificity={metrics[2]:.3f}, "
+              f"Precision={metrics[3]:.3f}, F1={metrics[4]:.3f}, ROC-AUC={metrics[5]:.3f}")
+
+    return mean_results

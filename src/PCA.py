@@ -133,7 +133,7 @@ def pca_kaiser(pca_model, x, y):
 
 
 def pca_scree(pca_model):
-    
+
 
     print("Accourding to Scree we can subjectively say that the eighenvalue plot is never constant to decide on a number of components to retain.")
     
