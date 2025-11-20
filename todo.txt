@@ -1,2 +1,1 @@
-Acabar de ler relatorio (fiquei na parte dos results) e escrever Experimental setup/aranjar fisher LDA
-Correr 5 vezes, fazer media e desvio padrão, colocar resultados nas tabelas, tirar conclusões
+Testar com o standardScaler
