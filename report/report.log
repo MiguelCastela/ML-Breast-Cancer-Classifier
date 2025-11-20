@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2024.12.11)  1 NOV 2025 16:25
+=======
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2024.12.11)  29 OCT 2025 16:36
+>>>>>>> parent of b00b1e1 (commit final meta1)
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -55,6 +59,7 @@ Package: float 2001/11/08 v1.3d Float enhancements (AL)
 \@float@everytoks=\toks19
 \@floatcapt=\box52
 )
+<<<<<<< HEAD
 (/usr/share/texlive/texmf-dist/tex/latex/hyperref/hyperref.sty
 Package: hyperref 2024-01-20 v7.01h Hypertext links for LaTeX
 
@@ -193,6 +198,8 @@ Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 )
 \Hy@SectionHShift=\skip50
 )
+=======
+>>>>>>> parent of b00b1e1 (commit final meta1)
 (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2024-01-04 L3 backend support: PDF output (pdfTeX)
 \l__color_backend_stack_int=\count274
@@ -201,6 +208,7 @@ File: l3backend-pdftex.def 2024-01-04 L3 backend support: PDF output (pdfTeX)
 (./report.aux)
 \openout1 = `report.aux'.
 
+<<<<<<< HEAD
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 5.
 LaTeX Font Info:    ... okay on input line 5.
 LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 5.
@@ -219,6 +227,22 @@ LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 5.
 LaTeX Font Info:    ... okay on input line 5.
 LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 5.
 LaTeX Font Info:    ... okay on input line 5.
+=======
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 4.
+LaTeX Font Info:    ... okay on input line 4.
+>>>>>>> parent of b00b1e1 (commit final meta1)
 
 (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
@@ -253,7 +277,8 @@ File: images/UC_logo.png Graphic file (type png)
 <use images/UC_logo.png>
 Package pdftex.def Info: images/UC_logo.png  used on input line 12.
 (pdftex.def)             Requested size: 155.99762pt x 156.35631pt.
- [1
+
+[1
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map} <./images/UC_logo.png>] (./
 report.toc
@@ -267,6 +292,7 @@ LaTeX Font Info:    External font `cmex10' loaded for size
 \tf@toc=\write4
 \openout4 = `report.toc'.
 
+<<<<<<< HEAD
 
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has 
 been already used, duplicate ignored
@@ -275,10 +301,21 @@ been already used, duplicate ignored
 l.36 \newpage
               [1] [2]
 Underfull \hbox (badness 10000) in paragraph at lines 74--80
+=======
+[1]
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <12> on input line 48.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <8> on input line 48.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <6> on input line 48.
+ [2] [3] [4]
+>>>>>>> parent of b00b1e1 (commit final meta1)
 
- []
+LaTeX Warning: File `roc.png' not found on input line 148.
 
 
+<<<<<<< HEAD
 Underfull \hbox (badness 10000) in paragraph at lines 81--84
 
  []
@@ -328,6 +365,58 @@ l.208 ...{\text{Cancer}} + \boldsymbol{\mu}_{\text
 [6]
 Underfull \hbox (badness 10000) in paragraph at lines 217--219
 
+=======
+! Package pdftex.def Error: File `roc.png' not found: using draft setting.
+
+See the pdftex.def package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.148 ...udegraphics[width=1.1\textwidth]{roc.png}
+                                                  
+? 
+
+Overfull \hbox (39.00238pt too wide) in paragraph at lines 148--149
+ [][] 
+ []
+
+[5]
+
+LaTeX Warning: Reference `sec:ROC' on page 6 undefined on input line 153.
+
+
+LaTeX Warning: Reference `fig:roc_curves' on page 6 undefined on input line 153
+.
+
+
+Overfull \hbox (17.29439pt too wide) in paragraph at lines 155--156
+[]\OT1/cmr/m/n/12 Desta forma aplicaram-se os difer-entes clas-si-fi-cadores a 
+este m^^Setodo, obtendo-
+ []
+
+[6]
+
+LaTeX Warning: Reference `tab:roc_classifiers' on page 7 undefined on input lin
+e 174.
+
+
+LaTeX Warning: File `matriz_corr.png' not found on input line 180.
+
+
+! Package pdftex.def Error: File `matriz_corr.png' not found: using draft setti
+ng.
+
+See the pdftex.def package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.180 ...ics[width=1.1\textwidth]{matriz_corr.png}
+                                                  
+? 
+
+Overfull \hbox (39.00238pt too wide) in paragraph at lines 180--181
+ [][] 
+>>>>>>> parent of b00b1e1 (commit final meta1)
  []
 
 [7]
@@ -337,6 +426,7 @@ File: images/violin.png Graphic file (type png)
 Package pdftex.def Info: images/violin.png  used on input line 235.
 (pdftex.def)             Requested size: 429.00238pt x 354.39857pt.
 
+<<<<<<< HEAD
 Overfull \hbox (39.00238pt too wide) in paragraph at lines 235--236
  [][] 
  []
@@ -404,6 +494,34 @@ Overfull \hbox (39.00238pt too wide) in paragraph at lines 459--460
  []
 
 [16 <./images/LDA1.png>] [17] [18] (./report.aux)
+=======
+LaTeX Warning: Reference `fig:mcorr' on page 8 undefined on input line 185.
+
+[8]
+
+LaTeX Warning: Reference `tab:kruskal_classifiers' on page 9 undefined on input
+ line 206.
+
+
+LaTeX Warning: File `PC1.png' not found on input line 213.
+
+
+! Package pdftex.def Error: File `PC1.png' not found: using draft setting.
+
+See the pdftex.def package documentation for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.213 ...udegraphics[width=1.1\textwidth]{PC1.png}
+                                                  
+? 
+
+Overfull \hbox (39.00238pt too wide) in paragraph at lines 213--214
+ [][] 
+ []
+
+[9] [10] [11] (./report.aux)
+>>>>>>> parent of b00b1e1 (commit final meta1)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
@@ -416,6 +534,7 @@ Package rerunfilecheck Info: File `report.out' has not changed.
 (rerunfilecheck)             Checksum: 95F98C822764D28018CDE5F4E2330539;3399.
  ) 
 Here is how much of TeX's memory you used:
+<<<<<<< HEAD
  8558 strings out of 476182
  133075 string characters out of 5795594
  1931975 words of memory out of 5000000
@@ -423,6 +542,15 @@ Here is how much of TeX's memory you used:
  564750 words of font info for 58 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  75i,8n,79p,1549b,484s stack positions out of 10000i,1000n,20000p,200000b,200000s
+=======
+ 1506 strings out of 476182
+ 24745 string characters out of 5795594
+ 1929975 words of memory out of 5000000
+ 23535 multiletter control sequences out of 15000+600000
+ 564750 words of font info for 58 fonts, out of 8000000 for 9000
+ 14 hyphenation exceptions out of 8191
+ 57i,9n,65p,661b,249s stack positions out of 10000i,1000n,20000p,200000b,200000s
+>>>>>>> parent of b00b1e1 (commit final meta1)
  </home/castela/.texlive2023/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1200.6
 00pk></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb><
 /usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/s
@@ -435,10 +563,19 @@ ts/type1/public/amsfonts/cm/cmr8.pfb></usr/share/texlive/texmf-dist/fonts/type1
 c/amsfonts/cm/cmsy8.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfo
 nts/cm/cmti12.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm
 /cmtt12.pfb>
+<<<<<<< HEAD
 Output written on report.pdf (19 pages, 744300 bytes).
 PDF statistics:
  303 PDF objects out of 1000 (max. 8388607)
  240 compressed objects within 3 object streams
  53 named destinations out of 1000 (max. 500000)
  193 words of extra memory for PDF output out of 10000 (max. 10000000)
+=======
+Output written on report.pdf (12 pages, 369084 bytes).
+PDF statistics:
+ 106 PDF objects out of 1000 (max. 8388607)
+ 66 compressed objects within 1 object stream
+ 0 named destinations out of 1000 (max. 500000)
+ 6 words of extra memory for PDF output out of 10000 (max. 10000000)
+>>>>>>> parent of b00b1e1 (commit final meta1)
 

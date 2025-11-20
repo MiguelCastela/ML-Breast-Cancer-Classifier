@@ -37,75 +37,81 @@
 
 \section{Introduction}
 
+<<<<<<< HEAD
 In this report we explain the implementation of a Machine Learning model capable of accurately identifying individuals diagnosed with breast cancer based on a blood sample dataset.
 
 \noindent
 The dataset used in this study consists of data from 116 patients, including 64 diagnosed with breast cancer and 52 belonging to a healthy control group. The nine analyzed variables comprise parameters such as age, body mass index (BMI), glucose and insulin concentrations, the HOMA index, the levels of leptin, adiponectin, resistin, and MCP-1.
 
+=======
+This work aims to develop a Machine Learning model capable of accurately identifying individuals diagnosed with breast cancer based on blood sample data.
+
+The dataset used in this study consists of data from 116 patients, including 64 diagnosed with breast cancer and 52 belonging to a healthy control group. The nine analyzed variables comprise demographic and biochemical parameters, namely age, body mass index (BMI), glucose and insulin concentrations, the HOMA index, and the levels of leptin, adiponectin, resistin, and MCP-1.
+>>>>>>> parent of b00b1e1 (commit final meta1)
 
 \section{Methods and Methodologies}
 
 
 \subsection{Data Partitioning}
 
+<<<<<<< HEAD
 The data was initially divided into three subsets: a training set (70\%), a test set (15\%), and a validation set (15\%). However, the test and validation sets were later merged, because during the first stage of the project there is no hyperparameter tuning, invalidating the need of a separate test and validation set. The classifiers were trained using the training set, while the test set is reserved for evaluating the classifiers’ performance and generalization ability. This was done using a stratified split, ensuring that the proportion of classes (\textit{Healthy} and \textit{Cancer}) was maintained in both subsets. \\
 \noindent
 After the partitioning, the data was normalized according to $\frac{x - \mu}{\sigma}$, so that each feature had a mean of 0 and a standard deviation of 1, ensuring comparability across variables with different value scales.
+=======
+The data were initially split into two subsets: a training set (70\%) and a test set (30\%). This split allows the model to be trained using only the training set, while the test set is reserved for evaluating the classifiers’ performance and generalization ability. The partitioning was performed in a stratified manner, ensuring that the proportion of classes (\textit{Healthy} and \textit{Cancer}) was maintained in both subsets. The data were normalized according to $\frac{x - \mu}{\sigma}$, so that each feature had a mean of 0 and a standard deviation of 1, ensuring comparability across variables with different scales.
+>>>>>>> parent of b00b1e1 (commit final meta1)
 
 \subsection{Feature Selection}
 
+<<<<<<< HEAD
 Before applying the classifiers, it is necessary to evaluate the discriminative power of the original variables to identify those most relevant for distinguishing between the two classes. Firstly, we plot box/violing plots for each feature to see which are more discriminative. After, these were ranked and picked based on various feature selection methods
+=======
+Before applying the classifiers, it is necessary to evaluate the discriminative power of the original variables to identify those most relevant for distinguishing between classes and reducing redundancies.  
+This step aims to improve model performance and reduce the dimensionality of the data.
+>>>>>>> parent of b00b1e1 (commit final meta1)
 
 \subsubsection{Kruskal-Wallis Test}
 
 The Kruskal-Wallis test is a non-parametric statistical test used to compare two or more independent samples.  
-In this context, it was applied to assess the statistical relevance of each variable in distinguishing between the \textit{Healthy} and \textit{Cancer} classes.
+In this context, it was applied to assess the statistical relevance of each variable in distinguishing between the \textit{Healthy} and \textit{Cancer} classes.  
+The function \texttt{stats.kruskal} from the \texttt{scipy} library was used to compute the p-value for each feature.
+
 The null hypothesis (\(H_0\)) assumes that the distributions of samples from different classes come from the same population, i.e., that the variable has no discriminative power.  
-When the p-value is below 0.05, \(H_0\) is rejected, concluding that the samples come from distinct populations and that the feature has discriminative ability.\\
-\noindent
-The function \texttt{stats.kruskal} from the \texttt{scipy} library was used to compute the p-value for each feature. 
-The features were ranked according to their score values, allowing the identification of those with the greatest discriminative power between healthy and cancer samples.
-
-
+When the p-value is below 0.05, \(H_0\) is rejected, concluding that the samples come from distinct populations and that the feature has discriminative ability.
 
 \subsubsection{ROC Curve and AUC}
 \label{sec:ROC}
 
 The ROC (Receiver Operating Characteristic) method is particularly suitable for binary classification problems.  
 The ROC curve represents the true positive rate (TPR) as a function of the false positive rate (FPR) for different decision thresholds.  
-The area under the curve (AUC) provides a quantitative measure of the performance of the classifier.\\
-\noindent
-An AUC value of 1 indicates perfect separation between classes, while a value of 0.5 indicates performance equivalent to random guessing. When the value is below 0.5 we simply switch the variables so that the inverse is the one that counts. 
-Therefore the ROC/AUC analysis allows identifying variables with the highest discriminative capacity.\\
+The area under the curve (AUC) provides a quantitative measure of classifier performance.
 
-\noindent
-In this analysis, each clinical feature was individually evaluated by computing its ROC curve against the binary class labels (Healthy and Cancer).  
-The \texttt{roc\_curve} and \texttt{auc} functions from the \texttt{scikit-learn} library were used to calculate the False Positive Rate (FPR), True Positive Rate (TPR), and the corresponding AUC for each variable.\\
-
-\noindent
-The results were plotted using the \texttt{Plotly} library, generating individual ROC curves for all features in a grid layout, with the AUC value annotated in each subplot.  
-Finally, the features were ranked according to their AUC values, allowing the identification of those with the greatest discriminative power between healthy and cancer samples.
+An AUC value of 1 indicates perfect separation between classes, while a value of 0.5 indicates performance equivalent to random guessing.  
+Thus, ROC/AUC analysis allows identifying variables with the highest discriminative capacity.
 
 \subsubsection{Correlation Matrix}
 
 The correlation matrix is used to assess linear relationships between variables.  
-High correlations indicate redundancy, meaning that two features vary similarly.  
+High correlations indicate redundancy, i.e., two features vary similarly.  
 Analyzing this matrix helps select subsets of less correlated variables, reducing redundancy and improving classifier efficiency.
 
+<<<<<<< HEAD
 The correlation matrix of the nine features was computed to assess the degree of linear dependence between variables.  
 This analysis was implemented using the \texttt{numpy.corrcoef} function and visualized with \texttt{Plotly Express} as a heatmap.  
 
 
 \subsection{Feature Reduction}
 
+=======
+>>>>>>> parent of b00b1e1 (commit final meta1)
 \subsubsection{Principal Component Analysis (PCA)}
-\label{sec:PCA}
 
 PCA is an unsupervised a dimensionality reduction technique that projects data onto a new set of orthogonal axes, called principal components (PCs), which maximize data variance.  
 The goal is to find a reduced set of variables capturing most of the information contained in the original data with minimal variance loss.
-\noindent
+
 Eigenvectors define the direction (axis orientation), while eigenvalues represent the variance explained along those directions.
-\noindent
+
 Three criteria were used to determine the optimal number of components to retain:
 
 \begin{itemize}
@@ -113,19 +119,9 @@ Three criteria were used to determine the optimal number of components to retain
     \item \textbf{Scree Criterion:} identify the point where the eigenvalue plot (scree plot) stabilizes, indicating components with marginal contribution;
     \item \textbf{Kaiser Criterion:} retain only components with eigenvalues greater than 1 (applicable to normalized data).
 \end{itemize}
-\noindent
-The \texttt{PCA} class from the \texttt{scikit-learn} library was then applied to compute the principal components, eigenvalues, and explained variance ratios.\\
-
-
-\noindent
-For the 95\% variance criterion, the cumulative explained variance was calculated, and the minimum number of components required to reach 95\% of the total variance was identified. Using \texttt{Plotly}, a bar chart was created to display the variance explained by each principal component. Additionally a graph was created that shows all the samples projected onto the fist principal component (PC1)
-\noindent
-The principal components were plotted against their explained variance, along with a threshold line at eigenvalue =1 to apply the Kaiser criterion. Components with eigenvalues greater than one were retained, and the corresponding explained variance was computed.\
-\noindent
-The Scree plot, generated using \texttt{Plotly}, was analyzed subjectively to determine the point at which the curve flattens out, indicating where additional principal components contribute little to the total variance. 
-
 
 \subsubsection{Linear Discriminant Analysis (LDA)}
+<<<<<<< HEAD
 \noindent
 LDA aims to project data into a lower-dimensional subspace that maximizes class separability while minimizing within-class variability.  
 This supervised method finds a direction (or several) that maximizes the ratio between between-class variance and within-class variance, according to Fisher's criterion.
@@ -137,11 +133,17 @@ The result is a linear combination of the original variables, usable for both vi
 The \texttt{LinearDiscriminantAnalysis} class from \texttt{scikit-learn} was then fitted to the dataset to compute the optimal discriminant direction that maximizes class separation.
 \noindent
 The data were projected onto the first linear discriminant (LDA1), and the resulting one-dimensional representation was visualized using a scatter plot, allowing a qualitative evaluation of the separation between healthy and cancer samples.
+=======
+>>>>>>> parent of b00b1e1 (commit final meta1)
 
+Linear Discriminant Analysis aims to project data into a lower-dimensional subspace that maximizes class separability while minimizing within-class variability.  
+The method finds a direction (or several) that maximizes the ratio between between-class variance and within-class variance, according to Fisher's criterion.
+
+The result is a linear combination of the original variables, usable for both visualization and classification.
 
 \subsection{Classifiers}
 
-After feature selection and reduction, three distance-based classifiers were applied to the data:
+After feature selection and reduction, three distance-based classifiers were applied:
 
 \subsubsection{Euclidean Distance Classifier}
 
@@ -153,16 +155,10 @@ In this classifier, each unknown sample is assigned to the class whose mean is c
 
 where \(x\) represents the sample and \(m\) the class mean.  
 This method assumes that all variables have equal weight and similar variance.
-\noindent
-In the implementation, the mean vector of each class was computed using the selected features, using \texttt{np.mean}.  
-Each test sample were then classified by computing its Euclidean distance to both class means and assigning it to the closest class with \texttt{np.linalg.norm}.  
-The classifier's performance was evaluated by calculating standard metrics, including sensitivity, specificity, precision, F1-score and accuracy.  
-
 
 \subsubsection{Mahalanobis Distance Classifier}
 
 The Mahalanobis distance is a more sophisticated metric that accounts for correlations among variables and differences in scale.  
-\noindent
 It is defined as:
 
 \[
@@ -171,13 +167,6 @@ It is defined as:
 
 where \(\mathbf{C}\) is the covariance matrix of the variables.  
 This classifier adapts to the true geometry of the data, being more robust when variables are correlated.
-\noindent
-In the implementation, the mean vector of each class was first computed using the selected features using texttt{np.mean}.  
-The pooled covariance matrix of the features was then calculated with texttt{np.var} and inverted to account for correlations and differences in scale.  
-Each test sample was classified by computing its Mahalanobis distance to the class means, taking into account the covariance structure, and assigning it to the closest class.  
-Standard performance metrics, including sensitivity, specificity, precision, F1-score and accuracy, were subsequently calculated to evaluate the classifier.
-%AQUI FOI CALCULADA UMA FUNÇÃO DE DECISÃO, VER ISTO MELHOR
-
 
 \subsubsection{Fisher LDA Classifier}
 
@@ -191,6 +180,7 @@ y = \mathbf{w}^T \mathbf{x} + b
 
 where \(b\) is the bias term.  
 This classifier is particularly effective for two-class problems and when distributions are approximately Gaussian.
+<<<<<<< HEAD
 \noindent
 To implement the Fisher LDA classifier, several computational steps were followed. The mean vector of each class was then computed to represent its centroid in the multidimensional feature space. 
 Subsequently, the within-class scatter matrices were calculated for both classes, quantifying the covariance of samples around their respective means. 
@@ -222,9 +212,12 @@ To ensure the robustness and reliability of the results, each experiment was exe
 For every run, the dataset was divided into random training and testing subsets using a stratified split, ensuring that the class proportions (Healthy and Cancer) were preserved across all partitions.
 After completing the five runs, the performance metrics score were averaged to obtain stable and representative results, minimizing the influence of random initialization and data partitioning variability.
 
+=======
+>>>>>>> parent of b00b1e1 (commit final meta1)
 
 \section{Result Analysis}
 
+<<<<<<< HEAD
 The following section presents the analysis of the obtained results, focusing on the performance of the implemented classifiers and dimensionality reduction methods.
 
 \noindent
@@ -269,10 +262,18 @@ The ROC curves were plotted, and the AUC values were calculated for each feature
 \begin{figure}[H] 
     \centering
     \includegraphics[width=1.1\textwidth]{images/ROC_AUC.png}
+=======
+As curcas ROC foram traçadas e foram calculadas as AUC para cada feature, como se mostra na imagem abaixo.
+
+\begin{figure}[H] 
+    \centering
+    \includegraphics[width=1.1\textwidth]{roc.png}
+>>>>>>> parent of b00b1e1 (commit final meta1)
     \caption{ROC curves for different feature sets.}
     \label{fig:roc_curves}
 \end{figure}
 
+<<<<<<< HEAD
 \noindent
 According to Figure \ref{fig:roc_curves}, the AUC values of all features were ranked in order to identify the top five features to be used in the training of the classifiers.
 
@@ -301,25 +302,39 @@ According to the Table \ref{tab:AUC values}, we can conclude that the top five f
  
 \noindent
 The different classifiers were applied using these features, and the resulting performance metrics for the test data are presented in the table below.
+=======
+ Tal como mencionado em \ref{sec:ROC}, as features cuja AUC é menor que 0.5 não são úteis, pelo que, como se pode ver na figura \ref{fig:roc_curves}, as top 5 features selecionadas por este método são: METER AS FEATURES.
+ 
+Desta forma aplicaram-se os diferentes classificadores a este método, obtendo-se os resultados das métricas presentes na tabela abaixo para os dados de teste.
+>>>>>>> parent of b00b1e1 (commit final meta1)
 
 \begin{table}[H]
 \centering
 \caption{Classifier results using the top 5 features (ROC selection).} 
-\begin{tabular}{lcccc}
+\begin{tabular}{lccc}
 \hline
 \textbf{Metric} & \textbf{Euclidean} & \textbf{Mahalanobis} & \textbf{Fisher LDA} \\
 \hline
+<<<<<<< HEAD
 Sensitivity (\%) & 52.6 & 63.2 & 62.1 \\
 Specificity (\%) & 81.2 & 75.0 & 75.0 \\
 Precision (\%) & 77.1 & 74.7 & 74.3 \\
 F1-score (\%) & 62.5 & 68.2 & 67.4 \\
 Accuracy (\%) & 65.7 & 68.6 & 68.0 \\
 ROC-AUC (\%) & 76.2 & 77.6 & 77.0 \\
+=======
+Sensitivity (\%) & 47.37 & 52.63 & 52.63 \\
+Specificity (\%) & 75.00 & 68.75 & 68.75 \\
+Precision (\%) & 69.23 & 66.67 & 66.67 \\
+F1-score (\%) & 56.25 & 58.82 & 58.82 \\
+Accuracy (\%) & 60.00 & 60.00 & 60.00 \\
+>>>>>>> parent of b00b1e1 (commit final meta1)
 \hline
 \end{tabular}
 \label{tab:roc_classifiers}
 \end{table}
 
+<<<<<<< HEAD
 \noindent
 According to Table \ref{tab:roc_classifiers}, the three classifiers yield similar values for each metric and occasionally show improvements compared to the results obtained using all features. However, this is not consistently observed.
 
@@ -329,12 +344,22 @@ We generated the correlation matrix to analyze how the features in training vary
 \begin{figure}[H] 
     \centering
     \includegraphics[width=1\textwidth]{images/CORRELATION_MATRIX.png}
+=======
+De acordo com a Tabela \ref{tab:roc_classifiers}, verifica-se que os três classificadores dão o mesmo valor de 60\% para a accuracy e que os restantes valores não se distanciam muito, como seria de esperar, uma vez que é tudo projetado a uma dimensão. Verifica-se ainda que o classificador Mahalanobis e Fisher LDA apresentam valores iguais para todas as métricas.
+
+Fizemos a matriz de correlação para perceber como as features variam entre si, ou seja, se estão muito ou pouco correlacionadas para percebermos se são redundantes, isto é, explicam o mesmo.
+ 
+\begin{figure}[H] 
+    \centering
+    \includegraphics[width=1.1\textwidth]{matriz_corr.png}
+>>>>>>> parent of b00b1e1 (commit final meta1)
     \caption{Correlation matrix between features.}
     \label{fig:mcorr}
 \end{figure}
 \noindent
 From Figure \ref{fig:mcorr}, we can observe that Adiponectin is the most weakly correlated with the other features, followed by Age and BMI.
 
+<<<<<<< HEAD
 \noindent
 Next, we applied the Kruskal–Wallis test to rank the top five features by their H value. This indicates the degree to which each feature significantly differentiates between the groups, with higher H values reflecting stronger discriminatory power and greater relevance for distinguishing class differences.
 
@@ -364,7 +389,12 @@ From Table \ref{tab:kruskal_h_values}, we can identify the top five features as 
 
 \noindent
 The performance metrics on the test data for the classifiers applied to the feature selection using the Kruskal–Wallis test are presented in the table below.
+=======
+Atraves da Figura \ref{fig:mcorr} verificamos que Adiponectin é muito pouco correlacionada com as outras features, assim como Age, MCP-1, VER MEHOR NO GRÁFICO QUE A FIGURA É MUITO PEQUENA    
+Depois usámos o teste de Kruskal-Wallis para reduzir a dimensionalidade e obtermos o top 5 das features, cujo p-value é maior (ou menor?) que 0.05, o que indica que as amostras pertencem à mesma população. SE CALHAR FAZER TABELA COM OS VALORES DE P?
+>>>>>>> parent of b00b1e1 (commit final meta1)
 
+Os resultados das métricas aos dados de teste da aplicação dos classificadores à seleção das features com Kruskal-Wallis estão indicados na tabela abaixo.
 \begin{table}[H]
 \centering
 \caption{Classifier results using the top 5 features (Kruskal-Wallis selection).}
@@ -372,17 +402,26 @@ The performance metrics on the test data for the classifiers applied to the feat
 \hline
 \textbf{Metric} & \textbf{Euclidean} & \textbf{Mahalanobis} & \textbf{Fisher LDA} \\
 \hline
+<<<<<<< HEAD
 Sensitivity (\%) & 52.6 & 63.2 & 62.1 \\
 Specificity (\%) & 81.2 & 75.0 & 75.0 \\
 Precision (\%) & 77.1 & 74.7 & 74.3 \\
 F1-score (\%) & 62.5 & 68.2 & 67.4 \\
 Accuracy (\%) & 65.7 & 68.6 & 68.0 \\
 ROC-AUC (\%) & 76.2 & 77.6 & 77.0 \\
+=======
+Sensitivity (\%) & 47.37 & 52.63 & 52.63 \\
+Specificity (\%) & 75.00 & 68.75 & 68.75 \\
+Precision (\%) & 69.23 & 66.67 & 66.67 \\
+F1-score (\%) & 56.25 & 58.82 & 58.82 \\
+Accuracy (\%) & 60.00 & 60.00 & 60.00 \\
+>>>>>>> parent of b00b1e1 (commit final meta1)
 \hline
 \end{tabular}
 \label{tab:kruskal_classifiers}
 \end{table}
 
+<<<<<<< HEAD
 \noindent
 As can be seen in Table \ref{tab:kruskal_classifiers}, the results are identical to those obtained using the ROC-AUC curves. This identical performance of the classifiers can be explained by the fact that both approaches identified the same five features. This demonstrates that, for this dataset, both feature selection methods successfully capture the features with the strongest class-discriminative power.
 
@@ -431,6 +470,20 @@ Because of this we applied the 7 components that explain 95\% of the variance to
 \noindent
 Using the different classifiers on the testing data, the performance metrics were applied for this method, as presented in the table below.
 
+=======
+Como podemos observar através da Tabela \ref{tab:kruskal_classifiers}, os resultados são iguais aos obtidos para a curva roc pois selecioanram as mesmas features, como seria de esperar (ENCONTRAR MAIS JUSTIFICAÇÃO PARA OS RESULTADOS DAREM EXTAMENTE IGUAIS)
+
+
+Depois através do PCA fomos ver quais eram as PC que apresentavam mais wejfiowjfiwkjo
+
+\begin{figure}[H] 
+    \centering
+    \includegraphics[width=1.1\textwidth]{PC1.png}
+    \caption{PC1}
+    \label{fig:pc1}
+\end{figure}
+
+>>>>>>> parent of b00b1e1 (commit final meta1)
 \begin{table}[H]
 \centering
 \caption{Classifier results using the top 7 principal components from PCA.}
@@ -438,17 +491,26 @@ Using the different classifiers on the testing data, the performance metrics wer
 \hline
 \textbf{Metric} & \textbf{Euclidean} & \textbf{Mahalanobis} & \textbf{Fisher LDA} \\
 \hline
+<<<<<<< HEAD
 Sensitivity (\%) & 50.5 & 66.3 & 66.3 \\
 Specificity (\%) & 80.0 & 80.0 & 80.0 \\
 Precision (\%) & 76.0 & 80.2 & 80.2 \\
 F1-score (\%) & 60.3 & 72.2 & 72.2 \\
 Accuracy (\%) & 64.0 & 72.6 & 72.6 \\
 ROC-AUC (\%) & 73.6 & 75.9 & 75.7 \\
+=======
+Sensitivity (\%) & 42.11 & 57.89 & 52.63 \\
+Specificity (\%) & 81.25 & 62.50 & 62.50 \\
+Precision (\%) & 72.73 & 64.71 & 62.50 \\
+F1-score (\%) & 53.33 & 61.11 & 57.14 \\
+Accuracy (\%) & 60.00 & 60.00 & 57.14 \\
+>>>>>>> parent of b00b1e1 (commit final meta1)
 \hline
 \end{tabular}
 \label{tab:pca_classifiers}
 \end{table}
 
+<<<<<<< HEAD
 \noindent
 According to Table \ref{tab:pca_classifiers}, it can be observed that the results obtained with the Mahalanobis and Fisher LDA classifiers are identical, as explained in Section \ref{sec:mahalanobis_fisher}. Nevertheless, some metrics, such as accuracy, F1-score, sensitivity, precision, and specificity, show slight improvements compared to the results obtained using all features or the top features selected via ROC-AUC and Kruskal-Wallis. However, these improvements are only observed when using the Mahalanobis and Fisher LDA classifiers.
 \noindent
@@ -462,10 +524,19 @@ With LDA, the data was reduced to a single dimension, as shown in the figure bel
 \end{figure}
 \noindent
 By applying the classifiers with the testing data projected in the LDA, the resulting performance metrics are presented in the table below.
+=======
+%\begin{figure}[H] 
+%    \centering
+%    \includegraphics[width=1.1\textwidth]{LD1.png}
+%    \caption{PC1}
+%    \label{fig:ld1}
+%\end{figure}
+>>>>>>> parent of b00b1e1 (commit final meta1)
 
 \begin{table}[H]
 \centering
 \caption{Classifier results using the linear projection obtained by LDA (1D).}
+<<<<<<< HEAD
 \begin{tabular}{lcc}
 \hline
 \textbf{Metric} & \textbf{Euclidean} & \textbf{Mahalanobis} \\
@@ -476,11 +547,23 @@ Precision (\%) & 89.4 & 89.4 \\
 F1-score (\%) & 83.7 & 83.7 \\
 Accuracy (\%) & 83.4 & 83.4 \\
 ROC-AUC (\%) & 90.9 & 91.8 \\
+=======
+\begin{tabular}{lccc}
+\hline
+\textbf{Metric} & \textbf{Euclidean} & \textbf{Mahalanobis} & \textbf{Fisher LDA} \\
+\hline
+Sensitivity (\%) & 84.21 & 84.21 & 84.21 \\
+Specificity (\%) & 81.25 & 81.25 & 81.25 \\
+Precision (\%) & 84.21 & 84.21 & 84.21 \\
+F1-score (\%) & 84.21 & 84.21 & 84.21 \\
+Accuracy (\%) & 82.86 & 82.86 & 82.86 \\
+>>>>>>> parent of b00b1e1 (commit final meta1)
 \hline
 \end{tabular}
 \label{tab:lda1d_classifiers}
 \end{table}
 
+<<<<<<< HEAD
 Analyzing the values in Table \ref{tab:lda1d_classifiers}, a clear improvement can be observed across all performance metrics for all classifiers, as expected using a supervised approach. It is also worth noting that the Fisher LDA classifier was not applied to the LDA features, as explained in Section \ref{sec:lda_fisherlda}.
 
 \subsection{Similarities between Mahalanobis and Fisher LDA classifiers}
@@ -506,5 +589,7 @@ Overall, the results indicate that supervised linear methods such as LDA, which 
 
 
 
+=======
+>>>>>>> parent of b00b1e1 (commit final meta1)
 \end{document}
 
