@@ -3,6 +3,14 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import f1_score, roc_curve, auc
 import numpy as np
+import scipy.io as sio
+import plotly.express as px
+import plotly.graph_objects as go
+from sklearn import mixture
+from scipy.stats import multivariate_normal
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.inspection import DecisionBoundaryDisplay
+import matplotlib.pyplot as plt
 
 
 
@@ -301,6 +309,140 @@ def test_fisher_lda(model, data=None , ixHealthy=None, ixCancer=None):
     return accuracy, sensitivity, specificity, precision, f1_score, roc_auc
 
 
+def bayes_fit_predict(Xtr, ytr, Xte, return_model=False, reg=1e-6):
+    """
+    Classificador Bayesiano Gaussiano (2 classes) numa única função.
+    - Xtr: ndarray [n_train, d]
+    - ytr: rótulos de treino (ex.: {1,2} ou {0,1})
+    - Xte: ndarray [n_test, d]
+    - return_model: se True, devolve também o modelo (médias, covariâncias e priors)
+    - reg: regularização adicionada à diagonal das covariâncias
+    Retorna: y_pred (mesma codificação de ytr) e, opcionalmente, o modelo.
+    """
+    ytr = np.asarray(ytr).squeeze()
+    classes = np.unique(ytr)
+    if classes.size != 2:
+        raise ValueError("Este classificador suporta apenas 2 classes.")
+
+    c1, c2 = classes[0], classes[1]
+    ix1 = np.where(ytr == c1)[0]
+    ix2 = np.where(ytr == c2)[0]
+
+    Pw1=ix1.shape[0]/(ix1.shape[0]+ix2.shape[0])
+    Pw2=ix2.shape[0]/(ix1.shape[0]+ix2.shape[0])
+
+    clf1 = mixture.GaussianMixture(n_components=1)
+    clf2 = mixture.GaussianMixture(n_components=1)
+    mod1=clf1.fit(Xtr[ix1,:])
+    mod2=clf2.fit(Xtr[ix2,:])
+
+    mean1 = mod1.means_.squeeze()
+    mean2 = mod2.means_.squeeze()
+
+    cov1 = mod1.covariances_[0]
+    cov2 = mod2.covariances_[0]
+
+    # Regularização para evitar matrizes singulares
+    if cov1.ndim == 0:
+        cov1 = np.array([[cov1 + reg]])
+        cov2 = np.array([[cov2 + reg]])
+    else:
+        cov1 = cov1 + reg * np.eye(cov1.shape[0])
+        cov2 = cov2 + reg * np.eye(cov2.shape[0])
+
+    # Log-posteriors para maior estabilidade numérica
+    logp1 = multivariate_normal.logpdf(Xte, mean=mean1, cov=cov1) + np.log(Pw1)
+    logp2 = multivariate_normal.logpdf(Xte, mean=mean2, cov=cov2) + np.log(Pw2)
+
+    y_pred = np.where(logp1 >= logp2, c1, c2)
+
+    if return_model:
+        model = {'mean1': mean1, 'mean2': mean2,
+                 'cov1': cov1, 'cov2': cov2,
+                 'Pw1': Pw1, 'Pw2': Pw2,
+                 'classes': (c1, c2)}
+        return y_pred, model
+    return y_pred
+
+# ...existing code...
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.inspection import DecisionBoundaryDisplay
+import matplotlib.pyplot as plt
+
+def knn_classificar(X_train, y_train, X_test, y_test=None, k=1, plot=False, feature_names=None):
+    """
+    Classificador k-NN simples.
+    X_train, X_test: arrays (n_samples, n_features)
+    y_train: rótulos de treino
+    y_test: rótulos verdadeiros (opcional) para métricas
+    k: número de vizinhos
+    plot: se True e n_features==2, desenha fronteira de decisão
+    feature_names: lista com nomes das 2 features (apenas para labels do gráfico)
+    Retorna: y_pred, accuracy, erro_percent
+    """
+    clf = KNeighborsClassifier(n_neighbors=k)
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+
+    accuracy = None
+    erro_percent = None
+    if y_test is not None:
+        hits = np.sum(y_pred == y_test)
+        accuracy = hits / y_test.shape[0]
+        erro_percent = (1 - accuracy) * 100
+        print(f"k={k}  Error (%)={erro_percent:.2f}")
+
+    if plot and X_test.shape[1] == 2:
+        xlabel = feature_names[0] if feature_names else "Feature 1"
+        ylabel = feature_names[1] if feature_names else "Feature 2"
+        disp = DecisionBoundaryDisplay.from_estimator(
+            clf, X_test, response_method="predict",
+            xlabel=xlabel, ylabel=ylabel, alpha=0.5,
+        )
+        disp.ax_.scatter(X_test[:, 0], X_test[:, 1], c=y_pred if y_test is None else y_test, edgecolor="k")
+        plt.title(f"k-NN (k={k})")
+        plt.show()
+
+    return y_pred, accuracy, erro_percent
+
+
+def knn_classifier(X_train, y_train, X_test, y_test=None, k=1, plot=False, feature_names=None):
+    """
+    Classificador k-NN simples.
+    X_train, X_test: arrays (n_samples, n_features)
+    y_train: rótulos de treino
+    y_test: rótulos verdadeiros (opcional) para métricas
+    k: número de vizinhos
+    plot: se True e n_features==2, desenha fronteira de decisão
+    feature_names: lista com nomes das 2 features (apenas para labels do gráfico)
+    Retorna: y_pred, accuracy, erro_percent
+    """
+    knn1 = KNeighborsClassifier(n_neighbors=k)
+    knn1.fit(X_train, y_train)
+    y_pred = knn1.predict(X_test)
+
+    accuracy = None
+    erro_percent = None
+    if y_test is not None:
+        hits = np.sum(y_pred == y_test)
+        accuracy = hits / y_test.shape[0]
+        erro_percent = (1 - accuracy) * 100
+        print(f"k={k}  Error (%)={erro_percent:.2f}")
+
+    if plot and X_test.shape[1] == 2:
+        xlabel = feature_names[0] if feature_names else "Feature 1"
+        ylabel = feature_names[1] if feature_names else "Feature 2"
+        disp = DecisionBoundaryDisplay.from_estimator(
+            knn1, X_test, response_method="predict",
+            xlabel=xlabel, ylabel=ylabel, alpha=0.5,
+        )
+        disp.ax_.scatter(X_test[:, 0], X_test[:, 1], c=y_pred if y_test is None else y_test, edgecolor="k")
+        plt.title(f"k-NN (k={k})")
+        plt.show()
+
+    return y_pred, accuracy, erro_percent
+
+
 def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, ixHealthy_test, ixCancer_test, all_features, top5_roc=None, top5_kruskall=None, X_pca_train=None, X_pca_test=None, LD1_train=None, LD1_test=None):
    
 
@@ -424,3 +566,9 @@ def run_classifiers_multiple_times(train_data, test_data, ixHealthy_train, ixCan
               f"Precision={metrics[3]:.3f}, F1={metrics[4]:.3f}, ROC-AUC={metrics[5]:.3f}")
 
     return mean_results
+    
+
+
+          
+                                 
+
