@@ -11,6 +11,8 @@ from scipy.stats import multivariate_normal
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.inspection import DecisionBoundaryDisplay
 import matplotlib.pyplot as plt
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.model_selection import train_test_split
 
 
 
@@ -442,6 +444,173 @@ def knn_classifier(X_train, y_train, X_test, y_test=None, k=1, plot=False, featu
 
     return y_pred, accuracy, erro_percent
 
+
+def svm_hard_margin(X, y, C=1e10, tol=1e-3, max_passes=100):
+    """
+    Treina um SVM hard-margin via SMO simplificado.
+    - X: ndarray (n_samples, n_features)
+    - y: ndarray (n_samples,) com rótulos em {-1, +1}
+    - C, tol, max_passes: hiperparâmetros do SMO simplificado
+    Retorna: dict com w, b, alphas, ixSv e um método 'predict(X)'.
+    """
+    X = np.asmatrix(X)
+    y = np.asmatrix(y).T
+    m, n = X.shape
+
+    def clipAlphasJ(aj, H, L):
+        if aj > H: aj = H
+        if L > aj: aj = L
+        return aj
+
+    def selectJrandom(i, m):
+        j = i
+        while j == i:
+            j = int(np.random.uniform(0, m))
+        return j
+
+    b = 0.0
+    alphas = np.asmatrix(np.zeros((m, 1)))
+    passes = 0
+
+    while passes < max_passes:
+        num_changed_alphas = 0
+        for i in range(m):
+            fXi = float(np.multiply(alphas, y).T * (X * X[i, :].T)) + b
+            Ei = fXi - float(y[i])
+            if ((y[i] * Ei < -tol) and (alphas[i] < C)) or ((y[i] * Ei > tol) and (alphas[i] > 0)):
+                j = selectJrandom(i, m)
+                fXj = float(np.multiply(alphas, y).T * (X * X[j, :].T)) + b
+                Ej = fXj - float(y[j])
+
+                alphaIold = alphas[i].copy()
+                alphaJold = alphas[j].copy()
+
+                if (y[i] != y[j]):
+                    L = max(0, alphas[j] - alphas[i])
+                    H = min(C, C + alphas[j] - alphas[i])
+                else:
+                    L = max(0, alphas[j] + alphas[i] - C)
+                    H = min(C, alphas[j] + alphas[i])
+
+                if L == H:
+                    continue
+
+                eta = 2.0 * X[i, :] * X[j, :].T - X[i, :] * X[i, :].T - X[j, :] * X[j, :].T
+                if eta >= 0:
+                    continue
+
+                alphas[j] -= y[j] * (Ei - Ej) / eta
+                alphas[j] = clipAlphasJ(alphas[j], H, L)
+
+                if abs(alphas[j] - alphaJold) < 1e-5:
+                    continue
+
+                alphas[i] += y[j] * y[i] * (alphaJold - alphas[j])
+
+                b1 = b - Ei - y[i] * (alphas[i] - alphaIold) * X[i, :] * X[i, :].T - y[j] * (alphas[j] - alphaJold) * X[i, :] * X[j, :].T
+                b2 = b - Ej - y[i] * (alphas[i] - alphaIold) * X[i, :] * X[j, :].T - y[j] * (alphas[j] - alphaJold) * X[j, :] * X[j, :].T
+
+                if (0 < alphas[i]) and (C > alphas[i]):
+                    b = float(b1)
+                elif (0 < alphas[j]) and (C > alphas[j]):
+                    b = float(b2)
+                else:
+                    b = float((b1 + b2) / 2.0)
+
+                num_changed_alphas += 1
+
+        passes = passes + 1 if num_changed_alphas == 0 else 0
+
+    # Compute w
+    w = np.zeros((1, n))
+    y_vec = np.asarray(y).flatten()
+    for i in range(m):
+        w += float(alphas[i]) * y_vec[i] * np.asarray(X[i, :])
+    w = np.asmatrix(w).T  # shape (n,1)
+
+    # Support vectors
+    ixSv = np.where(np.asarray(alphas).flatten() > 0)[0]
+    Svs = np.asarray(X)[ixSv, :]
+    ySvs = y_vec[ixSv]
+
+    # Compute b via média de dois SVs (se existirem de ambos os lados)
+    if np.any(ySvs == 1) and np.any(ySvs == -1):
+        pos_sv = Svs[ySvs == 1][0]
+        neg_sv = Svs[ySvs == -1][0]
+        b_alt = -0.5 * (float(w.T @ np.asmatrix(pos_sv).T) + float(w.T @ np.asmatrix(neg_sv).T))
+        b = b_alt
+
+    def predict(Xte):
+        Xte = np.asmatrix(Xte)
+        scores = Xte * w + b
+        return np.where(np.asarray(scores).flatten() >= 0, 1, -1)
+
+    return {
+        "w": w,            # (n,1)
+        "b": b,            # escalar
+        "alphas": alphas,  # (m,1)
+        "ixSv": ixSv,      # índices dos support vectors
+        "predict": predict
+    }
+
+
+def decision_tree_classifier(X, y, showM=False, test_size=0.2, random_state=42,
+                             criterion='entropy', max_depth=3,
+                             min_samples_split=2, min_samples_leaf=1,
+                             max_features=None, max_leaf_nodes=None):
+    """
+    Treina e avalia um classificador Árvore de Decisão.
+    - X: ndarray/DataFrame (n_samples, n_features)
+    - y: ndarray/Series (n_samples,)
+    - showM: se True, desenha a árvore
+    - hiperparâmetros ajustáveis via argumentos
+    Retorna: dict com modelo e métricas.
+    """
+    # Split
+    Xtrain, Xtest, ytrain, ytest = train_test_split(
+        X, y, test_size=test_size, random_state=random_state
+    )
+
+    # Modelo
+    model = DecisionTreeClassifier(
+        criterion=criterion,
+        splitter='best',
+        max_depth=max_depth,
+        min_samples_split=min_samples_split,
+        min_samples_leaf=min_samples_leaf,
+        max_features=max_features,
+        max_leaf_nodes=max_leaf_nodes
+    )
+    model.fit(Xtrain, ytrain)
+
+    # Predição e métricas
+    ypred = model.predict(Xtest)
+    accuracy = np.mean(ypred == ytest)
+
+    # Binário: calcular F1 (se possível)
+    try:
+        f1 = f1_score(ytest, ypred)
+    except Exception:
+        f1 = None
+
+    # Plot opcional
+    if showM:
+        plt.figure(figsize=(15,10))
+        plot_tree(model, filled=True, feature_names=getattr(Xtrain, 'columns', None))
+        plt.title("Decision Tree")
+        plt.tight_layout()
+        plt.show()
+
+    print(f"DecisionTree accuracy={accuracy:.3f}" + (f", F1={f1:.3f}" if f1 is not None else ""))
+
+    return {
+        "model": model,
+        "Xtrain": Xtrain, "Xtest": Xtest,
+        "ytrain": ytrain, "ytest": ytest,
+        "y_pred": ypred,
+        "accuracy": accuracy,
+        "f1": f1
+    }
 
 def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, ixHealthy_test, ixCancer_test, all_features, top5_roc=None, top5_kruskall=None, X_pca_train=None, X_pca_test=None, LD1_train=None, LD1_test=None):
    
