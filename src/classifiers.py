@@ -13,6 +13,10 @@ from sklearn.inspection import DecisionBoundaryDisplay
 import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier, plot_tree
 from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.inspection import DecisionBoundaryDisplay
+import matplotlib.pyplot as plt
+
 
 
 
@@ -323,15 +327,16 @@ def bayes_fit_predict(Xtr, ytr, Xte, return_model=False, reg=1e-6):
     """
     ytr = np.asarray(ytr).squeeze()
     classes = np.unique(ytr)
-    if classes.size != 2:
-        raise ValueError("Este classificador suporta apenas 2 classes.")
 
     c1, c2 = classes[0], classes[1]
     ix1 = np.where(ytr == c1)[0]
     ix2 = np.where(ytr == c2)[0]
 
+    #compute priors
     Pw1=ix1.shape[0]/(ix1.shape[0]+ix2.shape[0])
     Pw2=ix2.shape[0]/(ix1.shape[0]+ix2.shape[0])
+
+    # Estimate gaussian conditional PDFs --> fit two Gaussian Mixture Models
 
     clf1 = mixture.GaussianMixture(n_components=1)
     clf2 = mixture.GaussianMixture(n_components=1)
@@ -344,7 +349,7 @@ def bayes_fit_predict(Xtr, ytr, Xte, return_model=False, reg=1e-6):
     cov1 = mod1.covariances_[0]
     cov2 = mod2.covariances_[0]
 
-    # Regularização para evitar matrizes singulares
+    # Regularização para evitar matrizes singulares, explicar isto no relatorio
     if cov1.ndim == 0:
         cov1 = np.array([[cov1 + reg]])
         cov2 = np.array([[cov2 + reg]])
@@ -353,6 +358,7 @@ def bayes_fit_predict(Xtr, ytr, Xte, return_model=False, reg=1e-6):
         cov2 = cov2 + reg * np.eye(cov2.shape[0])
 
     # Log-posteriors para maior estabilidade numérica
+    #NAO é aqui que se usaria a função pdfGauss e usebayes do stor? onde meter o testBayes classifier?
     logp1 = multivariate_normal.logpdf(Xte, mean=mean1, cov=cov1) + np.log(Pw1)
     logp2 = multivariate_normal.logpdf(Xte, mean=mean2, cov=cov2) + np.log(Pw2)
 
@@ -366,10 +372,6 @@ def bayes_fit_predict(Xtr, ytr, Xte, return_model=False, reg=1e-6):
         return y_pred, model
     return y_pred
 
-# ...existing code...
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.inspection import DecisionBoundaryDisplay
-import matplotlib.pyplot as plt
 
 def knn_classificar(X_train, y_train, X_test, y_test=None, k=1, plot=False, feature_names=None):
     """
@@ -683,6 +685,10 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
 
         df_lda_train = pd.DataFrame(LD1_train, columns=['LD1'])
         df_lda_test = pd.DataFrame(LD1_test, columns=['LD1'])
+
+
+        model = train_fisher_lda(['LD1'], method_name="LDA", data=df_lda_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
+        results['lda_fisher'] = test_fisher_lda(model, data=df_lda_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
     
 
         model = train_euclidean_distance(['LD1'], method_name="LDA", data=df_lda_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
