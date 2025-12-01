@@ -2,7 +2,7 @@ import numpy as np
 import plotly.express as px 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
-def lda_analysis(dados, ixHealthy, ixCancer):
+def lda_analysis(dados):
     #---------LDA---------
 
 
@@ -49,5 +49,13 @@ def lda_analysis(dados, ixHealthy, ixCancer):
     fig.write_html("plots/lda_projection_onto_lda1.html")
     
 
+    return LD1, lda
+
+
+def lda_test(dados, lda):
+    X = dados.to_numpy()[:, :-1]
+    transformed = lda.transform(X)
+    LD1 = transformed[:, 0]
     return LD1
+
 

@@ -2,7 +2,7 @@ from xml.sax.handler import all_features
 import ROC_AUC as roc_auc_module
 import kruskal_wallis as kruskal_wallis_module
 from PCA import pca_analysis, pca_scree, pca_kaiser 
-from LDA import lda_analysis
+from LDA import lda_analysis, lda_test
 from classifiers import run_all_classifiers, run_classifiers_multiple_times
 import plotly.graph_objects as go
 import numpy as np
@@ -176,8 +176,8 @@ def one_run():
     print("\n5. LINEAR DISCRIMINANT ANALYSIS (LDA)")
     print("-" * 40)
     try:
-        lda = lda_analysis(train_data, ixHealthy_train, ixCancer_train)
-        lda_test = lda_analysis(test_data, ixHealthy_test, ixCancer_test)
+        lda, lda_model = lda_analysis(train_data)
+        lda_test_values = lda_test(test_data, lda_model)
         print("LDA for each sample    : ", lda)
     except Exception as e:
         print(f"LDA analysis failed: {e}")
@@ -200,7 +200,7 @@ def one_run():
             X_pca_train=X_pca,
             X_pca_test=X_pca_test,
             LD1_train=lda,
-            LD1_test=lda_test
+            LD1_test=lda_test_values
         )
         
         print("\n" + "="*60)

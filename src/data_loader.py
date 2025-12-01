@@ -2,6 +2,8 @@ import os
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
 
 
 def get_random_train_test_split():
@@ -43,11 +45,17 @@ def get_random_train_test_split():
         random_state=random_seed
     )
 
+    
     mu = X_train.mean(axis=0)
     st = X_train.std(axis=0)
 
     # Normalize training data
     X_train = (X_train - mu) / st
+
+
+
+    #scaler = StandardScaler()
+    #X_train = pd.DataFrame(scaler.fit_transform(X_train), columns=fnames, index=X_train.index)
 
 
     X_val, X_test, y_val, y_test = train_test_split(
@@ -57,8 +65,13 @@ def get_random_train_test_split():
         random_state=random_seed
     )
 
+
     X_val = (X_val - mu) / st
     X_test = (X_test - mu) / st
+
+
+    #X_val   = pd.DataFrame(scaler.transform(X_val), columns=fnames, index=X_val.index)   
+    #X_test = pd.DataFrame(scaler.transform(X_test), columns=fnames, index=X_test.index)
 
     # Merge X_train and y_train back into a single DataFrame
     train_data = X_train.copy()
