@@ -24,12 +24,14 @@ def train_adaboost(feature_names, method_name="Unknown", data=None, ixHealthy=No
     base_estimator = DecisionTreeClassifier(max_depth=1) 
     
     # Fit the AdaBoost model
+    # Use a supported algorithm variant. Newer scikit-learn versions deprecate/limit 'SAMME.R'.
+    # 'SAMME' is classification-oriented and supported.
     clf = AdaBoostClassifier(
         estimator=base_estimator,
         n_estimators=n_estimators,
         learning_rate=learning_rate,
         random_state=42,
-        algorithm='SAMME.R' # Uses probability estimates for better performance
+        algorithm='SAMME'
     )
     clf.fit(X_train, y_train)
 

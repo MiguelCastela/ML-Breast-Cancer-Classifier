@@ -3,11 +3,12 @@ import ROC_AUC as roc_auc_module
 import kruskal_wallis as kruskal_wallis_module
 from PCA import pca_analysis, pca_scree, pca_kaiser 
 from LDA import lda_analysis, lda_test
-from classifiers import run_all_classifiers, run_classifiers_multiple_times
+from classifiers import run_all_classifiers
 import plotly.graph_objects as go
 import numpy as np
 from plotly.subplots import make_subplots
 from data_loader import get_random_train_test_split
+from classifiers import search_optimal_params
 
 
 
@@ -19,7 +20,7 @@ from data_loader import get_random_train_test_split
 def one_run():
     """Main function that orchestrates all analyses"""
 
-    dados, ixHealthy, ixCancer, fnames, Classes, train_data, test_data, ixHealthy_train, ixCancer_train, ixHealthy_test, ixCancer_test = get_random_train_test_split()
+    dados, ixHealthy, ixCancer, fnames, Classes, train_data, val_data,   test_data, ixHealthy_train, ixCancer_train, ixHealthy_val, ixCancer_val, ixHealthy_test, ixCancer_test = get_random_train_test_split()
     all_features = list(fnames)
 
     print("=" * 60)
@@ -151,6 +152,7 @@ def one_run():
         X_pca = pca_model.transform(X)[:, :numpcs]  # shape: (n_samples, numpcs)
 
 
+        X_pca_val = pca_model.transform(val_data.to_numpy()[:, :-1])[:, :numpcs]
         X_pca_test = pca_model.transform(test_data.to_numpy()[:, :-1])[:, :numpcs]  
 
 
@@ -178,46 +180,69 @@ def one_run():
     try:
         lda, lda_model = lda_analysis(train_data)
         lda_test_values = lda_test(test_data, lda_model)
+        lda_val = lda_test(val_data, lda_model)
         print("LDA for each sample    : ", lda)
     except Exception as e:
         print(f"LDA analysis failed: {e}")
     
     print("\n6. CLASSIFIERS WITH DIFFERENT FEATURE SELECTIONS")
     print("-" * 50)
-    try:
-
-        
-        classifier_results = run_all_classifiers(
+    
+    print("\n6. HYPERPARAMETER SEARCH (Validation Step)")
+    print("-" * 50)
+    
+    # Placeholder for running the search on ALL FEATURES
+    search_optimal_params(
             train_data=train_data,
-            test_data=test_data,
+            val_data=val_data,
             ixHealthy_train=ixHealthy_train,
             ixCancer_train=ixCancer_train,
-            ixHealthy_test=ixHealthy_test,
-            ixCancer_test=ixCancer_test,
+            ixHealthy_val=ixHealthy_val,
+            ixCancer_val=ixCancer_val,
             all_features=all_features,
             top5_roc=top5_roc,
             top5_kruskall=top5_kruskall,
-            X_pca_train=X_pca,
-            X_pca_test=X_pca_test,
-            LD1_train=lda,
-            LD1_test=lda_test_values
+            X_pca_train=X_pca,    # <<< Passed X_pca_train
+            X_pca_val=X_pca_val,  # <<< Passed X_pca_val
+            LD1_train=lda,        # <<< Passed LD1_train
+            LD1_val=lda_val       # <<< Passed LD1_val
         )
         
-        print("\n" + "="*60)
-        print("CLASSIFIER RESULTS SUMMARY")
-        print("="*60)
+    print("\n--- HYPERPARAMETER SEARCH COMPLETE ---")
+    # try:
+
+        
+    #     classifier_results = run_all_classifiers(
+    #         train_data=train_data,
+    #         test_data=test_data,
+    #         ixHealthy_train=ixHealthy_train,
+    #         ixCancer_train=ixCancer_train,
+    #         ixHealthy_test=ixHealthy_test,
+    #         ixCancer_test=ixCancer_test,
+    #         all_features=all_features,
+    #         top5_roc=top5_roc,
+    #         top5_kruskall=top5_kruskall,
+    #         X_pca_train=X_pca,
+    #         X_pca_test=X_pca_test,
+    #         LD1_train=lda,
+    #         LD1_test=lda_test_values
+    #     )
+        
+    #     print("\n" + "="*60)
+    #     print("CLASSIFIER RESULTS SUMMARY")
+    #     print("="*60)
 
     
-    except Exception as e:
-        print(f"Classifier analysis failed: {e}")
-        import traceback
-        traceback.print_exc()
+    # except Exception as e:
+    #     print(f"Classifier analysis failed: {e}")
+    #     import traceback
+    #     traceback.print_exc()
 
     print("\n" + "=" * 60)
     print("COMPLETED")
     print("=" * 60)
 
-    return classifier_results, roc, H_results, fnames
+    return roc, H_results, fnames
 
 
 def run_all_classifiers_multiple_times():
@@ -273,4 +298,4 @@ def run_all_classifiers_multiple_times():
 
 if __name__ == "__main__":
     one_run()
-    run_all_classifiers_multiple_times()
+    #run_all_classifiers_multiple_times()

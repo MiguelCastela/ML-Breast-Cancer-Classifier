@@ -16,7 +16,7 @@ def map_labels_to_01(y):
     return np.where(y == 1, 1, 0)
 
 
-def train_svm_custom(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None, C=1e10, tol=1e-3, max_passes=100):
+def train_svm_custom(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None, C=1, tol=1e-3, max_passes=10):
     """
     Trains a Linear SVM using the provided custom SMO implementation (svm_hard_margin logic).
     C is set to a large value (1e10) for hard-margin, matching the default in the original code.
@@ -169,51 +169,6 @@ def train_svm_custom(feature_names, method_name="Unknown", data=None, ixHealthy=
         "predict_scores": predict_scores,  # Returns raw scores (distance to hyperplane)
     }
 
-def test_svm_custom(model, data=None , ixHealthy=None, ixCancer=None):
-    """
-    Classifies test data using the custom linear SVM model and computes metrics.
-    """
-    if ixHealthy is None or ixCancer is None:
-        ixHealthy = np.where(data["Classification"] == "Healthy")
-        ixCancer = np.where(data["Classification"] == "Cancer")
-
-    feature_names = model["feature_names"]
-    
-    # --- Test Data Preparation ---
-    X_test = data[feature_names].iloc[ixHealthy[0]].values # Healthy
-    X_test = np.concatenate([X_test, data[feature_names].iloc[ixCancer[0]].values], axis=0)
-
-    # y_true is the ground truth in 0/1
-    y_true = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))])  # 0=Healthy, 1=Cancer
-
-    # --- Prediction and Decision Scores ---
-    y_pred = model["predict_labels"](X_test)
-    decision_scores = model["predict_scores"](X_test) # Raw scores for ROC-AUC
-
-    # --- Metric Calculation (Consistent with other test functions) ---
-    TP = np.sum((y_true == 1) & (y_pred == 1))
-    TN = np.sum((y_true == 0) & (y_pred == 0))
-    FP = np.sum((y_true == 0) & (y_pred == 1))
-    FN = np.sum((y_true == 1) & (y_pred == 0))
-
-    sensitivity = TP / (TP + FN) if (TP + FN) > 0 else 0
-    specificity = TN / (TN + FP) if (TN + FP) > 0 else 0
-    precision = TP / (TP + FP) if (TP + FP) > 0 else 0
-    f1_score = 2 * (precision * sensitivity) / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
-    accuracy = (TP + TN) / (TP + TN + FP + FN)
-
-    fpr, tpr, _ = roc_curve(y_true, decision_scores)
-    roc_auc = auc(fpr, tpr)
-
-    print(f"Sensitivity (%) = {sensitivity * 100:.2f}")
-    print(f"Specificity (%) = {specificity * 100:.2f}")
-    print(f"Precision (%) = {precision * 100:.2f}")
-    print(f"F1 Score (%) = {f1_score * 100:.2f}")
-    print(f"Accuracy (%) = {accuracy * 100:.2f}")
-    print(f"ROC-AUC (%) = {roc_auc * 100:.2f}")
-
-    return accuracy, sensitivity, specificity, precision, f1_score, roc_auc
-
 
 
 def train_svm_linear(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None, C=1):
@@ -288,29 +243,46 @@ def train_svm_rbf_kernel(feature_names, method_name="Unknown", data=None, ixHeal
     return model
 
 
-def test_svm(model, data=None , ixHealthy=None, ixCancer=None):
+
+def test_svm_generic(model, data=None , ixHealthy=None, ixCancer=None):
     """
-    Classifies test data using the trained Linear SVM model and computes metrics.
+    Classifies test data using either the Scikit-learn SVC/LinearSVC or the custom SVM model, 
+    and computes metrics.
     """
     if ixHealthy is None or ixCancer is None:
         ixHealthy = np.where(data["Classification"] == "Healthy")
         ixCancer = np.where(data["Classification"] == "Cancer")
 
     feature_names = model["feature_names"]
-    clf = model["clf"]
 
     # --- Test Data Preparation ---
-    X_test = data[feature_names].values
-    y_true = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))])  # 0=Healthy, 1=Cancer
+    # Need to handle both DataFrame slice and full array/matrix input for compatibility
+    if "w" in model: # Custom model uses array/matrix multiplication and works best with matrix data
+        X_test = data[feature_names].iloc[ixHealthy[0]].values
+        X_test = np.concatenate([X_test, data[feature_names].iloc[ixCancer[0]].values], axis=0)
+    else: # Scikit-learn model handles the dataframe slice extraction within the predict method
+        X_test = data[feature_names].values
+        
+    y_true = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))])
 
-    # --- Prediction and Decision Scores ---
-    y_pred = clf.predict(X_test)
+    # --- Prediction and Decision Scores (Unified Logic) ---
+    if "clf" in model:
+        # Case 1: Scikit-learn model (Trained by train_svm_linear or train_svm_rbf)
+        clf = model["clf"]
+        y_pred = clf.predict(X_test)
+        # Decision function for Scikit-learn SVMs
+        decision_scores = clf.decision_function(X_test)
+    
+    elif "predict_labels" in model:
+        # Case 2: Custom model (Trained by train_svm_custom)
+        y_pred = model["predict_labels"](X_test)
+        decision_scores = model["predict_scores"](X_test)
+    
+    else:
+        raise ValueError("Model dictionary must contain either 'clf' (sklearn) or 'predict_labels' (custom).")
 
-    # Decision scores for SVM is the distance to the hyperplane (w*x + b). 
-    # Higher score favors class 1 (Cancer).
-    decision_scores = clf.decision_function(X_test) 
 
-    # --- Metric Calculation (Consistent with other test functions) ---
+    # --- Metric Calculation ---
     TP = np.sum((y_true == 1) & (y_pred == 1))
     TN = np.sum((y_true == 0) & (y_pred == 0))
     FP = np.sum((y_true == 0) & (y_pred == 1))
@@ -333,219 +305,5 @@ def test_svm(model, data=None , ixHealthy=None, ixCancer=None):
     print(f"ROC-AUC (%) = {roc_auc * 100:.2f}")
 
     return accuracy, sensitivity, specificity, precision, f1_score, roc_auc
-
-
-def svm_search(X_train, y_train, X_test, y_test, runs = np.arange(0,10), CsP2 = np.arange(-20.0,20.0,2.0)):
-    """
-    Realiza busca em grid para encontrar melhor hiperparâmetro C do SVM hard-margin.
-    - X_train, y_train: dados de treino
-    - X_test, y_test: dados de teste
-    - runs: array com índices de múltiplas execuções
-    - CsP2: array com potências de 2 para testar C=2^CsP2
-    Retorna: melhor C e matriz de erros (runs x CsP2)
-    """
-
-    errMat=np.zeros((runs.shape[0],CsP2.shape[0]))
-
-    for r in runs:#Create several training/testing partitions
-        ki=0
-        for cP2 in CsP2:#Evaluate different Cs
-            #fit SVM
-            clf = svm.SVC(kernel="linear", C=2**cP2)
-            clf.fit(X_train, y_train)
-            yp=clf.predict(X_test)
-            #Evaluate error
-            Hits=(np.where(yp==y_test)[0]).shape[0]
-            Acc=Hits/y_test.shape[0]
-            
-            #Store error
-            errMat[r,ki]=(1-Acc)*100
-            ki=ki+1
-            
-    #at the end compute average error and error standard deviation
-    avgError=np.mean(errMat,axis=0)
-    stdError=np.std(errMat,axis=0)
-    xTickTexts=[]
-    for cP2 in CsP2:
-        xTickTexts.append("2^"+str(int(cP2)))
-
-
-    """
-    #Display average error as function of power of C
-    fig = px.scatter(x=CsP2, y=avgError,error_y=stdError)
-    fig.update_layout(
-        xaxis=dict(
-            title=dict(text="C"),
-            tickmode = 'array',
-            tickvals = CsP2,
-            ticktext = xTickTexts
-        ),
-        yaxis=dict(
-            title=dict(
-                text="Average Erros±Std"
-            )
-        ),
-        font=dict(
-            family="Courier New, monospace",
-            size=18,
-            color="RebeccaPurple"
-        )
-    )
-    fig.show()
-    """
-
-    #Fing the best C
-    optC=CsP2[np.where(avgError==np.min(avgError))[0]][0]
-    print("Best C=2^"+str(optC))
-
-    #Train again SVM with best C
-    clf = svm.SVC(kernel="linear", C=2**optC)
-    clf.fit(X_train, y_train)
-
-    yp=clf.predict(X_test)
-
-    Hits=(np.where(yp==y_test)[0]).shape[0]
-
-    Acc=Hits/y_test.shape[0]
-
-    Err=(1-Acc)*100
-
-    print("Error (%)="+str(Err))
-
-    
-
-
-def svm_rbf_kernel_search(X_train, y_train, X_test, y_test, runs=np.arange(0,10), CsP2=np.arange(-10,25.0,1.0), GsP2=np.arange(-25.0,0.0,1.0)):
-
-    errMat=np.zeros((CsP2.shape[0],GsP2.shape[0],runs.shape[0]))
-
-    for r in runs:#Create several training/testing partitions
-        ki=0
-        for cP2 in CsP2:#Evaluate different Cs
-            ui=0
-            for gP2 in GsP2:#Evaluate different Gammas
-                #fit SVM
-                clf = svm.SVC(kernel="rbf", C=2**cP2,gamma=2**gP2)
-                clf.fit(X_train, y_train)
-                yp=clf.predict(X_test)
-                #Evaluate error
-                Hits=(np.where(yp==y_test)[0]).shape[0]
-                Acc=Hits/y_test.shape[0]
-
-                #Store error
-                errMat[ki,ui,r]=(1-Acc)*100
-                ui=ui+1
-            ki=ki+1
-            
-    #at the end compute average error 
-    avgError=np.mean(errMat,axis=2)
-    minErrorIx=np.where(avgError==avgError.min())
-
-
-    #Plot Error 
-    yTickTexts=[]
-    for cP2 in CsP2:
-        yTickTexts.append("2^"+str(int(cP2)))
-        
-    xTickTexts=[]
-    for gP2 in GsP2:
-        xTickTexts.append("2^"+str(int(gP2)))
-
-
-    """
-    fig=go.Figure()                             
-
-    fig.add_trace(go.Heatmap(
-            z=avgError,
-            x=GsP2,
-            y=CsP2,
-            colorscale='Viridis'))
-
-
-
-    fig.add_scatter(x=GsP2[minErrorIx[1]],y=CsP2[minErrorIx[0]],mode='markers',marker_size=15,
-                    marker_symbol="x",marker=dict(color="white"),line=dict(width=8,color='white'),name="Minimum error")
-    #fig.add_trace(go.Surface(x=Xp,y=Yp,z=Z2))
-    #fig.update_traces(contours_z=dict(show=True, usecolormap=True,highlightcolor="limegreen", project_z=True))
-
-    #fig.update_xaxes(title_text="Gamma")
-    #fig.update_yaxes(title_text="C")
-
-
-    fig.update_layout(
-        xaxis=dict(
-            title=dict(text="Gamma"),
-            tickmode = 'array',
-            tickvals = GsP2,
-            ticktext = xTickTexts
-        ),
-        yaxis=dict(
-            title=dict(text="C"),
-            tickmode = 'array',
-            tickvals = CsP2,
-            ticktext = yTickTexts),
-        font=dict(
-            family="Courier New, monospace",
-            size=18,
-            color="RebeccaPurple"
-        ),
-        autosize=False,
-        width=900,
-        height=800)
-
-
-    fig.show()
-    """
-
-    print("One Best C=")
-    print("2^"+str(int(CsP2[minErrorIx[0]][0])))
-
-    print("One Best Gamma=")
-    print("2^"+str(int(GsP2[minErrorIx[1]][0])))
-
-    bestCP2=CsP2[minErrorIx[0]][0]
-    bestGP2=GsP2[minErrorIx[1]][0]
-    clf = svm.SVC(kernel="rbf", C=2**bestCP2,gamma=2**bestGP2)
-    clf.fit(X_train, y_train)
-
-    """
-    # Plotting settings
-    fig, ax = plt.subplots(figsize=(7, 7))
-    x_min, x_max, y_min, y_max = np.min(X_train[:,0]),np.max(X_train[:,0]),np.min(X_train[:,1]),np.max(X_train[:,1])
-    ax.set(xlim=(x_min, x_max), ylim=(y_min, y_max))
-
-    # Plot samples by color and add legend
-    scatter = ax.scatter(X_train[:, 0], X_train[:, 1], s=50, c=y_train, label=y_train, edgecolors="k")
-    plt.xlabel("N")
-    plt.ylabel("PRT/10")
-
-    # Plot decision boundary and margins
-    common_params = {"estimator": clf, "X": X, "ax": ax}
-    DecisionBoundaryDisplay.from_estimator(
-        **common_params,
-        response_method="predict",
-        plot_method="pcolormesh",
-        alpha=0.3,
-    )
-    DecisionBoundaryDisplay.from_estimator(
-        **common_params,
-        response_method="decision_function",
-        plot_method="contour",
-        levels=[-1, 0, 1],
-        colors=["k", "k", "k"],
-        linestyles=["--", "-", "--"],
-    )
-
-    # Plot bigger circles around samples that serve as support vectors
-    ax.scatter(
-        clf.support_vectors_[:, 0],
-        clf.support_vectors_[:, 1],
-        s=150,
-        facecolors="none",
-        edgecolors="k",
-        )
-
-    _ = plt.show()
-    """
 
 

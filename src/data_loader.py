@@ -77,24 +77,45 @@ def get_random_train_test_split():
     train_data = X_train.copy()
     train_data['Classification'] = y_train.values
 
-    test_data = pd.concat([X_val, X_test], axis=0)
-    test_labels = pd.concat([y_val, y_test], axis=0)
-    test_data['Classification'] = test_labels.values
+    # Build separate validation and test DataFrames (no concatenation)
+    val_data = X_val.copy()
+    val_data['Classification'] = y_val.values
+
+    test_data = X_test.copy()
+    test_data['Classification'] = y_test.values
 
     ixHealthy_train = np.where(train_data['Classification'] == "Healthy")
     ixCancer_train = np.where(train_data['Classification'] == "Cancer")
+
+    ixHealthy_val = np.where(val_data['Classification'] == "Healthy")
+    ixCancer_val = np.where(val_data['Classification'] == "Cancer")
 
     ixHealthy_test = np.where(test_data['Classification'] == "Healthy")
     ixCancer_test = np.where(test_data['Classification'] == "Cancer")
 
     print("Train shape:", train_data.shape)
-    print("Validation shape:", X_val.shape)
-    print("Test shape:", X_test.shape)
+    print("Validation shape:", val_data.shape)
+    print("Test shape:", test_data.shape)
 
     print("\nClass distribution:")
     print("Train:\n", y_train.value_counts(normalize=True))
     print("Val:\n", y_val.value_counts(normalize=True))
     print("Test:\n", y_test.value_counts(normalize=True))
 
-    return dados, ixHealthy, ixCancer, fnames, Classes, train_data, test_data, ixHealthy_train, ixCancer_train, ixHealthy_test, ixCancer_test
+    return (
+        dados,
+        ixHealthy,
+        ixCancer,
+        fnames,
+        Classes,
+        train_data,
+        val_data,
+        test_data,
+        ixHealthy_train,
+        ixCancer_train,
+        ixHealthy_val,
+        ixCancer_val,
+        ixHealthy_test,
+        ixCancer_test,
+    )
 
