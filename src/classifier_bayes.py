@@ -65,7 +65,7 @@ def train_bayesian_classifier(feature_names, method_name="Unknown", data=None , 
         "classes": (0, 1)  # 0=Healthy, 1=Cancer
     }
 
-        #NAO é aqui que se usaria a função pdfGauss e usebayes do stor? onde meter o testBayes classifier?
+        #NAO é aqui que se usaria a função pdfGauss e usebayes do stor?
 
     """
     def pdfGauss(X,mean,cov):
@@ -226,6 +226,101 @@ def test_bayesian_gaussian(model, data=None , ixHealthy=None, ixCancer=None):
     f1_score = 2 * (precision * sensitivity) / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
     accuracy = (TP + TN) / (TP + TN + FP + FN)
 
+    fpr, tpr, _ = roc_curve(y_true, decision_scores)
+    roc_auc = auc(fpr, tpr)
+    
+    print(f"Sensitivity (%) = {sensitivity * 100:.2f}")
+    print(f"Specificity (%) = {specificity * 100:.2f}")
+    print(f"Precision (%) = {precision * 100:.2f}")
+    print(f"F1 Score (%) = {f1_score * 100:.2f}")
+    print(f"Accuracy (%) = {accuracy * 100:.2f}")
+    print(f"ROC-AUC (%) = {roc_auc * 100:.2f}")
+
+    return accuracy, sensitivity, specificity, precision, f1_score, roc_auc
+
+
+def test_bayesian_custom(model, data=None , ixHealthy=None, ixCancer=None):
+    """
+    Classifies test data using the Gaussian Bayesian model and computes metrics,
+    EXPLICITLY using the provided custom pdfGauss and useBayes logic.
+    """
+
+    # --- Re-define Utility Functions (Assuming they were not globally defined) ---
+    # These functions must be available for the test function to run.
+
+    def pdfGauss(X,mean,cov):
+        """Calculates Multivariate Gaussian PDF (Likelihood $P(x|w_i)$)."""
+        covInv=np.linalg.inv(cov)
+        dim=cov.shape[0]
+        val=np.array([])
+        for i in range(X.shape[0]):
+            # Use X[i,:]-mean for the difference vector
+            diff = np.array([X[i,:] - mean]) 
+            # Calculate Mahalanobis distance squared: (x-mu)T * CovInv * (x-mu)
+            dist = (diff @ covInv @ diff.T).squeeze() 
+            # Calculate PDF value
+            multivariate_pdf = np.exp(-0.5*dist)/((2*np.pi)**(dim/2)*np.linalg.det(cov)**0.5)
+            val=np.append(val, multivariate_pdf)
+        return np.array([val]).T
+    
+    def useBayes(Xte, model):
+        """Applies Bayes rule to classify, returning {-1, 1} equivalent labels and raw scores."""
+        # Calculate P(x|w_i) * P(w_i) (Joint probability / Unnormalized posterior)
+        # Note: Your model uses mean0/cov0 for Healthy (class 0) and mean1/cov1 for Cancer (class 1)
+        # We assume Healthy corresponds to W1 (class 1) and Cancer to W2 (class 2) in the original useBayes logic
+        # OR, more simply: Pw0X is for class 0, Pw1X is for class 1.
+        
+        # P(x, w0) = P(x|w0) * P(w0)
+        Pw0X = pdfGauss(Xte, model['mean0'], model['cov0']) * model['Pw0']
+        # P(x, w1) = P(x|w1) * P(w1)
+        Pw1X = pdfGauss(Xte, model['mean1'], model['cov1']) * model['Pw1']
+        
+        # Decision score: Log of the posterior ratio (log(P(w1|x)/P(w0|x))) or similar value.
+        # Since we use raw joint probabilities, the score is Pw1X - Pw0X.
+        # NOTE: If Pw0X or Pw1X are near zero, division/subtraction can be unstable.
+        
+        # Use simple difference as the decision score (positive favors class 1/Cancer)
+        decision_scores = (Pw1X - Pw0X).squeeze()
+
+        # Classification: Class 1 (Cancer) if Pw1X > Pw0X, Class 0 (Healthy) otherwise
+        y_pred_01 = np.where(decision_scores > 0, 1, 0)
+        
+        return y_pred_01, decision_scores
+
+
+    # --- Setup ---
+
+    if ixHealthy is None or ixCancer is None:
+        ixHealthy = np.where(data["Classification"] == "Healthy")
+        ixCancer = np.where(data["Classification"] == "Cancer")
+
+    feature_names = model["feature_names"]
+    
+    # --- Test Data Preparation ---
+    X_healthy = data[feature_names].iloc[ixHealthy[0]].values
+    X_cancer = data[feature_names].iloc[ixCancer[0]].values
+    
+    X_test = np.concatenate([X_healthy, X_cancer], axis=0)
+    y_true = np.concatenate([np.zeros(len(X_healthy)), np.ones(len(X_cancer))])  # 0=Healthy, 1=Cancer
+
+    # --- Prediction using Custom Logic ---
+    y_pred, decision_scores = useBayes(X_test, model) 
+    # y_pred is now 0/1, decision_scores is the raw difference (P(x, w1) - P(x, w0))
+
+
+    # --- Metric Calculation (Unchanged) ---
+    TP = np.sum((y_true == 1) & (y_pred == 1))
+    TN = np.sum((y_true == 0) & (y_pred == 0))
+    FP = np.sum((y_true == 0) & (y_pred == 1))
+    FN = np.sum((y_true == 1) & (y_pred == 0))
+
+    sensitivity = TP / (TP + FN) if (TP + FN) > 0 else 0
+    specificity = TN / (TN + FP) if (TN + FP) > 0 else 0
+    precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+    f1_score = 2 * (precision * sensitivity) / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
+    accuracy = (TP + TN) / (TP + TN + FP + FN)
+
+    # decision_scores (P(x, w1) - P(x, w0)) are used for ROC
     fpr, tpr, _ = roc_curve(y_true, decision_scores)
     roc_auc = auc(fpr, tpr)
     

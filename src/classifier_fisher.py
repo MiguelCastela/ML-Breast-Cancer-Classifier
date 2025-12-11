@@ -62,6 +62,29 @@ def train_fisher_lda(feature_names, method_name="Unknown", data=None , ixHealthy
     print(f"LDA bias: {b}")
 
 
+    # Print training metrics
+    decision_values = (X @ w).flatten() + b
+    y_pred_tr = np.zeros(len(X))
+    y_pred_tr[decision_values > 0] = 1
+    TP = np.sum((y_true == 1) & (y_pred_tr == 1))
+    TN = np.sum((y_true == 0) & (y_pred_tr == 0))
+    FP = np.sum((y_true == 0) & (y_pred_tr == 1))
+    FN = np.sum((y_true == 1) & (y_pred_tr == 0))
+    sensitivity = TP / (TP + FN) if (TP + FN) > 0 else 0
+    specificity = TN / (TN + FP) if (TN + FP) > 0 else 0
+    precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+    f1 = 2 * (precision * sensitivity) / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
+    accuracy = (TP + TN) / (TP + TN + FP + FN)
+    from sklearn.metrics import roc_curve, auc
+    fpr, tpr, _ = roc_curve(y_true, decision_values)
+    roc_auc = auc(fpr, tpr)
+    print(f"[Train] Sensitivity (%) = {sensitivity * 100:.2f}")
+    print(f"[Train] Specificity (%) = {specificity * 100:.2f}")
+    print(f"[Train] Precision (%) = {precision * 100:.2f}")
+    print(f"[Train] F1 Score (%) = {f1 * 100:.2f}")
+    print(f"[Train] Accuracy (%) = {accuracy * 100:.2f}")
+    print(f"[Train] ROC-AUC (%) = {roc_auc * 100:.2f}")
+
     return{
         "w": w,
         "b": b,
@@ -69,6 +92,8 @@ def train_fisher_lda(feature_names, method_name="Unknown", data=None , ixHealthy
         "mu_healthy": mu_healthy,
         "mu_cancer": mu_cancer
     }
+
+
 
 
 

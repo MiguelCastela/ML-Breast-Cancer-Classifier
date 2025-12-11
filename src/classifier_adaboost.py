@@ -35,6 +35,28 @@ def train_adaboost(feature_names, method_name="Unknown", data=None, ixHealthy=No
     )
     clf.fit(X_train, y_train)
 
+    # Print training metrics
+    y_pred_tr = clf.predict(X_train)
+    decision_scores_tr = clf.predict_proba(X_train)[:, 1]
+    TP = np.sum((y_train == 1) & (y_pred_tr == 1))
+    TN = np.sum((y_train == 0) & (y_pred_tr == 0))
+    FP = np.sum((y_train == 0) & (y_pred_tr == 1))
+    FN = np.sum((y_train == 1) & (y_pred_tr == 0))
+    sensitivity = TP / (TP + FN) if (TP + FN) > 0 else 0
+    specificity = TN / (TN + FP) if (TN + FP) > 0 else 0
+    precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+    f1 = 2 * (precision * sensitivity) / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
+    accuracy = (TP + TN) / (TP + TN + FP + FN)
+    from sklearn.metrics import roc_curve, auc
+    fpr, tpr, _ = roc_curve(y_train, decision_scores_tr)
+    roc_auc = auc(fpr, tpr)
+    print(f"[Train] Sensitivity (%) = {sensitivity * 100:.2f}")
+    print(f"[Train] Specificity (%) = {specificity * 100:.2f}")
+    print(f"[Train] Precision (%) = {precision * 100:.2f}")
+    print(f"[Train] F1 Score (%) = {f1 * 100:.2f}")
+    print(f"[Train] Accuracy (%) = {accuracy * 100:.2f}")
+    print(f"[Train] ROC-AUC (%) = {roc_auc * 100:.2f}")
+
     model = {
         "feature_names": feature_names,
         "clf": clf,
@@ -96,7 +118,7 @@ def map_labels_to_pm1(y):
     # Converts 0 (Healthy) -> -1 and 1 (Cancer) -> 1
     return np.where(y == 1, 1, -1)
 
-def train_adaboost_custom(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None, n_mod=5):
+def train_adaboost_custom(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None, n_mod=5, learning_rate=1.0):
     """
     Trains a custom AdaBoost classifier using the provided logic. 
     Requires y labels to be {-1, +1}.
@@ -116,7 +138,7 @@ def train_adaboost_custom(feature_names, method_name="Unknown", data=None, ixHea
     # -------------------------------------------------------------------------
     # START: Adapted Core Training Logic from your code
     
-    def trainAdaboost(Xtr,ytr,nMod):
+    def trainAdaboost(Xtr,ytr,nMod, learning_rate):
         models= np.arange(nMod, dtype=DecisionTreeClassifier)
         N=Xtr.shape[0]
         w=np.ones((N))*(1/N)
@@ -139,13 +161,14 @@ def train_adaboost_custom(feature_names, method_name="Unknown", data=None, ixHea
             elif err >= 1.0 - 1e-10:
                 err = 1.0 - 1e-10
 
-            alpha=0.5*np.log((1-err)/err)
+            alpha_classic=0.5*np.log((1-err)/err)
+            alpha=learning_rate*alpha_classic
             models[i].alpha=alpha # Store alpha with the model
             
             # Weight update: w_j <- w_j * exp(-alpha * y_j * h(x_j))
             v=np.zeros((N))
             for j in range(N):
-                v[j]=w[j]*np.exp(-alpha*ytr[j]*pred[j])
+                v[j]=w[j]*np.exp(-alpha_classic*ytr[j]*pred[j])
             
             Sm=np.sum(v);
             w=v/Sm; # Normalize weights
@@ -153,7 +176,7 @@ def train_adaboost_custom(feature_names, method_name="Unknown", data=None, ixHea
         return models
     
     # Run the custom training function
-    trained_models = trainAdaboost(X_train, y_train_pm1, n_mod)
+    trained_models = trainAdaboost(X_train, y_train_pm1, n_mod, learning_rate)
     
     # END: Adapted Core Training Logic
     # -------------------------------------------------------------------------
@@ -163,6 +186,38 @@ def train_adaboost_custom(feature_names, method_name="Unknown", data=None, ixHea
         "models": trained_models, # Array of decision stumps with stored alpha
         "n_mod": n_mod
     }
+
+    # Print training metrics for custom AdaBoost
+    # Build decision scores and predictions on training set
+    nMod = trained_models.shape[0]
+    nsamp = X_train.shape[0]
+    predTot = np.zeros((nMod, nsamp))
+    for m in range(nMod):
+        label = trained_models[m].predict(X_train)  # in {-1, 1}
+        predTot[m, :] = trained_models[m].alpha * label
+    decision_scores_tr = np.sum(predTot, axis=0)
+    y_pred_pm1 = np.sign(decision_scores_tr)
+    y_pred_tr = map_labels_to_01(y_pred_pm1)
+    y_train = y_train_01  # original 0/1 labels
+
+    TP = np.sum((y_train == 1) & (y_pred_tr == 1))
+    TN = np.sum((y_train == 0) & (y_pred_tr == 0))
+    FP = np.sum((y_train == 0) & (y_pred_tr == 1))
+    FN = np.sum((y_train == 1) & (y_pred_tr == 0))
+    sensitivity = TP / (TP + FN) if (TP + FN) > 0 else 0
+    specificity = TN / (TN + FP) if (TN + FP) > 0 else 0
+    precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+    f1 = 2 * (precision * sensitivity) / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
+    accuracy = (TP + TN) / (TP + TN + FP + FN)
+    from sklearn.metrics import roc_curve, auc
+    fpr, tpr, _ = roc_curve(y_train, decision_scores_tr)
+    roc_auc = auc(fpr, tpr)
+    print(f"[Train] Sensitivity (%) = {sensitivity * 100:.2f}")
+    print(f"[Train] Specificity (%) = {specificity * 100:.2f}")
+    print(f"[Train] Precision (%) = {precision * 100:.2f}")
+    print(f"[Train] F1 Score (%) = {f1 * 100:.2f}")
+    print(f"[Train] Accuracy (%) = {accuracy * 100:.2f}")
+    print(f"[Train] ROC-AUC (%) = {roc_auc * 100:.2f}")
 
     return model
 

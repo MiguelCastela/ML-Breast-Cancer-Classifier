@@ -5,6 +5,7 @@ import numpy as np
 from sklearn import svm
 
 
+
 # Helper function to convert 0/1 labels to -1/+1
 def map_labels_to_pm1(y):
     # Converts 0 (Healthy) -> -1 and 1 (Cancer) -> 1
@@ -161,13 +162,39 @@ def train_svm_custom(feature_names, method_name="Unknown", data=None, ixHealthy=
     print(f"SVM bias (b): {b}")
 
     # Store the essential parts and prediction functions
-    return {
+    model = {
         "feature_names": feature_names,
         "w": w,
         "b": b,
         "predict_labels": predict_labels,  # Returns 0/1 labels
         "predict_scores": predict_scores,  # Returns raw scores (distance to hyperplane)
     }
+
+    # Print training metrics (custom SVM on training set)
+    y_pred_tr = model["predict_labels"](np.asarray(X_train))
+    decision_scores_tr = model["predict_scores"](np.asarray(X_train))
+    # Convert original training labels back to 0/1
+    y_train = np.where(y_train_pm1 == 1, 1, 0)
+    TP = np.sum((y_train == 1) & (y_pred_tr == 1))
+    TN = np.sum((y_train == 0) & (y_pred_tr == 0))
+    FP = np.sum((y_train == 0) & (y_pred_tr == 1))
+    FN = np.sum((y_train == 1) & (y_pred_tr == 0))
+    sensitivity = TP / (TP + FN) if (TP + FN) > 0 else 0
+    specificity = TN / (TN + FP) if (TN + FP) > 0 else 0
+    precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+    f1 = 2 * (precision * sensitivity) / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
+    accuracy = (TP + TN) / (TP + TN + FP + FN)
+    from sklearn.metrics import roc_curve, auc
+    fpr, tpr, _ = roc_curve(y_train, decision_scores_tr)
+    roc_auc = auc(fpr, tpr)
+    print(f"[Train] Sensitivity (%) = {sensitivity * 100:.2f}")
+    print(f"[Train] Specificity (%) = {specificity * 100:.2f}")
+    print(f"[Train] Precision (%) = {precision * 100:.2f}")
+    print(f"[Train] F1 Score (%) = {f1 * 100:.2f}")
+    print(f"[Train] Accuracy (%) = {accuracy * 100:.2f}")
+    print(f"[Train] ROC-AUC (%) = {roc_auc * 100:.2f}")
+
+    return model
 
 
 
@@ -206,6 +233,28 @@ def train_svm_linear(feature_names, method_name="Unknown", data=None, ixHealthy=
         "C": C,
     }
 
+    # Print training metrics
+    y_pred_tr = clf.predict(X_train)
+    decision_scores_tr = clf.predict_proba(X_train)[:, 1]
+    TP = np.sum((y_train == 1) & (y_pred_tr == 1))
+    TN = np.sum((y_train == 0) & (y_pred_tr == 0))
+    FP = np.sum((y_train == 0) & (y_pred_tr == 1))
+    FN = np.sum((y_train == 1) & (y_pred_tr == 0))
+    sensitivity = TP / (TP + FN) if (TP + FN) > 0 else 0
+    specificity = TN / (TN + FP) if (TN + FP) > 0 else 0
+    precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+    f1 = 2 * (precision * sensitivity) / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
+    accuracy = (TP + TN) / (TP + TN + FP + FN)
+    from sklearn.metrics import roc_curve, auc
+    fpr, tpr, _ = roc_curve(y_train, decision_scores_tr)
+    roc_auc = auc(fpr, tpr)
+    print(f"[Train] Sensitivity (%) = {sensitivity * 100:.2f}")
+    print(f"[Train] Specificity (%) = {specificity * 100:.2f}")
+    print(f"[Train] Precision (%) = {precision * 100:.2f}")
+    print(f"[Train] F1 Score (%) = {f1 * 100:.2f}")
+    print(f"[Train] Accuracy (%) = {accuracy * 100:.2f}")
+    print(f"[Train] ROC-AUC (%) = {roc_auc * 100:.2f}")
+
     return model
 
 
@@ -239,6 +288,28 @@ def train_svm_rbf_kernel(feature_names, method_name="Unknown", data=None, ixHeal
         "C": C,
         "gamma": gamma
     }
+
+    # Print training metrics
+    y_pred_tr = clf.predict(X_train)
+    decision_scores_tr = clf.predict_proba(X_train)[:, 1]
+    TP = np.sum((y_train == 1) & (y_pred_tr == 1))
+    TN = np.sum((y_train == 0) & (y_pred_tr == 0))
+    FP = np.sum((y_train == 0) & (y_pred_tr == 1))
+    FN = np.sum((y_train == 1) & (y_pred_tr == 0))
+    sensitivity = TP / (TP + FN) if (TP + FN) > 0 else 0
+    specificity = TN / (TN + FP) if (TN + FP) > 0 else 0
+    precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+    f1 = 2 * (precision * sensitivity) / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
+    accuracy = (TP + TN) / (TP + TN + FP + FN)
+    from sklearn.metrics import roc_curve, auc
+    fpr, tpr, _ = roc_curve(y_train, decision_scores_tr)
+    roc_auc = auc(fpr, tpr)
+    print(f"[Train] Sensitivity (%) = {sensitivity * 100:.2f}")
+    print(f"[Train] Specificity (%) = {specificity * 100:.2f}")
+    print(f"[Train] Precision (%) = {precision * 100:.2f}")
+    print(f"[Train] F1 Score (%) = {f1 * 100:.2f}")
+    print(f"[Train] Accuracy (%) = {accuracy * 100:.2f}")
+    print(f"[Train] ROC-AUC (%) = {roc_auc * 100:.2f}")
 
     return model
 
@@ -305,5 +376,6 @@ def test_svm_generic(model, data=None , ixHealthy=None, ixCancer=None):
     print(f"ROC-AUC (%) = {roc_auc * 100:.2f}")
 
     return accuracy, sensitivity, specificity, precision, f1_score, roc_auc
+
 
 

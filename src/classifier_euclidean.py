@@ -28,6 +28,32 @@ def train_euclidean_distance(feature_names, method_name="Unknown", data=None, ix
         "mu_cancer": mu_cancer
     }
 
+    # Print training metrics (on combined train set)
+    X = np.concatenate([X_healthy, X_cancer], axis=0)
+    y_train = np.concatenate([np.zeros(len(X_healthy)), np.ones(len(X_cancer))])
+    dist_healthy = np.linalg.norm(X - mu_healthy, axis=1)
+    dist_cancer = np.linalg.norm(X - mu_cancer, axis=1)
+    y_pred_tr = (dist_cancer < dist_healthy).astype(int)
+    TP = np.sum((y_train == 1) & (y_pred_tr == 1))
+    TN = np.sum((y_train == 0) & (y_pred_tr == 0))
+    FP = np.sum((y_train == 0) & (y_pred_tr == 1))
+    FN = np.sum((y_train == 1) & (y_pred_tr == 0))
+    sensitivity = TP / (TP + FN) if (TP + FN) > 0 else 0
+    specificity = TN / (TN + FP) if (TN + FP) > 0 else 0
+    precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+    f1 = 2 * (precision * sensitivity) / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
+    accuracy = (TP + TN) / (TP + TN + FP + FN)
+    decision_scores = dist_healthy - dist_cancer
+    from sklearn.metrics import roc_curve, auc
+    fpr, tpr, _ = roc_curve(y_train, decision_scores)
+    roc_auc = auc(fpr, tpr)
+    print(f"[Train] Sensitivity (%) = {sensitivity * 100:.2f}")
+    print(f"[Train] Specificity (%) = {specificity * 100:.2f}")
+    print(f"[Train] Precision (%) = {precision * 100:.2f}")
+    print(f"[Train] F1 Score (%) = {f1 * 100:.2f}")
+    print(f"[Train] Accuracy (%) = {accuracy * 100:.2f}")
+    print(f"[Train] ROC-AUC (%) = {roc_auc * 100:.2f}")
+
     return model
 
 def test_euclidean_distance(model, data=None , ixHealthy=None, ixCancer=None):

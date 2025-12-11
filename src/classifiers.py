@@ -5,7 +5,7 @@ from classifier_euclidean import train_euclidean_distance, test_euclidean_distan
 from classifier_mahalanobis import train_mahalanobis_distance, test_mahalanobis_distance
 from classifier_fisher import train_fisher_lda, test_fisher_lda
 from classifier_svm import train_svm_linear, test_svm_generic
-from grid_search import svm_search, svm_rbf_kernel_search, knn_classifier_search
+# Removed invalid imports of non-existent grid_search helpers
 from classifier_knn import train_knn, test_knn
 from classifier_decision_tree import train_decision_tree, test_decision_tree
 from classifier_bayes import train_bayesian_classifier, test_bayesian_gaussian
@@ -249,81 +249,3 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
         results['lda_adaboost_custom'] = test_adaboost_custom(model, data=df_lda_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
     return results
 
-
-def search_optimal_params(train_data, val_data, ixHealthy_train, ixCancer_train, 
-                         ixHealthy_val, ixCancer_val, all_features, top5_roc, top5_kruskall,
-                         X_pca_train=None, X_pca_val=None, 
-                         LD1_train=None, LD1_val=None,
-                         knn_k_list=np.arange(1, 20, 2), 
-                         svm_C_list=2**np.arange(-5.0, 10.0, 1.0),
-                         svm_gamma_list=2**np.arange(-10.0, 5.0, 1.0)):
-    """
-    Performs hyperparameter search for KNN, Linear SVM, and RBF SVM 
-    across all feature sets (Original, PCA, LDA) using the training data for model fitting 
-    and the validation data for scoring.
-    """
-    
-    optimal_params = {}
-    
-    # 1. Define all feature sets to test, using markers for pre-calculated arrays
-    feature_sets_to_test = {
-        "All Features": all_features,
-        "ROC-AUC Top 5": top5_roc,
-        "Kruskal-Wallis Top 5": top5_kruskall
-    }
-    if X_pca_train is not None and X_pca_val is not None:
-        feature_sets_to_test["PCA Features"] = "PCA_MARKER" 
-    if LD1_train is not None and LD1_val is not None:
-        feature_sets_to_test["LDA Features"] = "LDA_MARKER" 
-
-
-    for name, features in feature_sets_to_test.items():
-        
-        # --- Data Preparation: Extract X_train/X_val arrays ---
-        if name == "PCA Features":
-            # Use pre-calculated NumPy arrays for PCA (X_pca_train/val)
-            X_train_data = X_pca_train
-            X_val_data = X_pca_val
-            features_list = [f"PC{i+1}" for i in range(X_pca_train.shape[1])]
-            
-        elif name == "LDA Features":
-            # Use pre-calculated NumPy arrays for LDA (LD1_train/val)
-            X_train_data = LD1_train 
-            X_val_data = LD1_val
-            features_list = ["LD1"]
-            
-        elif features is not None and len(features) > 0:
-            # Use original Pandas DataFrames for ROC/KW/All
-            X_train_data = train_data[features].values
-            X_val_data = val_data[features].values
-            features_list = features
-        else:
-            print(f"\nSkipping search for {name}: Features not available.")
-            continue
-            
-        print(f"\n========================================================")
-        print(f"HYPERPARAMETER SEARCH FOR: {name} (Features: {features_list})")
-        print(f"========================================================")
-        
-        # Consistent label indices (tuples)
-        y_train_ixs = (ixHealthy_train, ixCancer_train)
-        y_val_ixs = (ixHealthy_val, ixCancer_val)
-        
-        # 1. KNN Search
-        K_opt = knn_classifier_search(X_train_data, y_train_ixs, X_val_data, y_val_ixs, k_list=knn_k_list)
-        optimal_params[f'KNN_{name}'] = K_opt
-        
-        # 2. Linear SVM Search
-        C_opt_lin = svm_search(X_train_data, y_train_ixs, X_val_data, y_val_ixs, C_list=svm_C_list)
-        optimal_params[f'SVM_Linear_{name}'] = C_opt_lin
-        
-        # 3. RBF SVM Search
-        C_opt_rbf, G_opt_rbf = svm_rbf_kernel_search(X_train_data, y_train_ixs, X_val_data, y_val_ixs, C_list=svm_C_list, gamma_list=svm_gamma_list)
-        optimal_params[f'SVM_RBF_{name}'] = (C_opt_rbf, G_opt_rbf)
-        
-    print("\n\n--- OPTIMAL PARAMETERS SUMMARY (Ready for Manual Input) ---")
-    for key, val in optimal_params.items():
-        print(f"  {key}: {val}")
-    print("-" * 60)
-        
-    return optimal_params

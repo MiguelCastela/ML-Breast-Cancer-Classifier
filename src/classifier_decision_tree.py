@@ -52,6 +52,28 @@ def train_decision_tree(feature_names, method_name="Unknown", data=None, ixHealt
     clf = DecisionTreeClassifier(max_depth=max_depth, random_state=42)
     clf.fit(X_train, y_train)
 
+    # Print training metrics
+    y_pred_tr = clf.predict(X_train)
+    decision_scores_tr = clf.predict_proba(X_train)[:, 1]
+    TP = np.sum((y_train == 1) & (y_pred_tr == 1))
+    TN = np.sum((y_train == 0) & (y_pred_tr == 0))
+    FP = np.sum((y_train == 0) & (y_pred_tr == 1))
+    FN = np.sum((y_train == 1) & (y_pred_tr == 0))
+    sensitivity = TP / (TP + FN) if (TP + FN) > 0 else 0
+    specificity = TN / (TN + FP) if (TN + FP) > 0 else 0
+    precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+    f1 = 2 * (precision * sensitivity) / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
+    accuracy = (TP + TN) / (TP + TN + FP + FN)
+    from sklearn.metrics import roc_curve, auc
+    fpr, tpr, _ = roc_curve(y_train, decision_scores_tr)
+    roc_auc = auc(fpr, tpr)
+    print(f"[Train] Sensitivity (%) = {sensitivity * 100:.2f}")
+    print(f"[Train] Specificity (%) = {specificity * 100:.2f}")
+    print(f"[Train] Precision (%) = {precision * 100:.2f}")
+    print(f"[Train] F1 Score (%) = {f1 * 100:.2f}")
+    print(f"[Train] Accuracy (%) = {accuracy * 100:.2f}")
+    print(f"[Train] ROC-AUC (%) = {roc_auc * 100:.2f}")
+
     model = {
         "feature_names": feature_names,
         "clf": clf,

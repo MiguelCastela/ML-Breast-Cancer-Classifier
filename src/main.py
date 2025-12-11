@@ -1,4 +1,12 @@
-from xml.sax.handler import all_features
+# Suppress specific sklearn FutureWarnings for AdaBoost 'algorithm' deprecation
+import warnings
+warnings.filterwarnings(
+    "ignore",
+    category=FutureWarning,
+    module="sklearn.ensemble._weight_boosting"
+)
+
+# Remove incorrect import of all_features
 import ROC_AUC as roc_auc_module
 import kruskal_wallis as kruskal_wallis_module
 from PCA import pca_analysis, pca_scree, pca_kaiser 
@@ -8,13 +16,8 @@ import plotly.graph_objects as go
 import numpy as np
 from plotly.subplots import make_subplots
 from data_loader import get_random_train_test_split
-from classifiers import search_optimal_params
-
-
-
-
-
-
+from run_grid_search import search_optimal_params_kfold
+from collections import Counter
 
 
 def one_run():
@@ -190,25 +193,64 @@ def one_run():
     
     print("\n6. HYPERPARAMETER SEARCH (Validation Step)")
     print("-" * 50)
+
     
-    # Placeholder for running the search on ALL FEATURES
-    search_optimal_params(
-            train_data=train_data,
-            val_data=val_data,
-            ixHealthy_train=ixHealthy_train,
-            ixCancer_train=ixCancer_train,
-            ixHealthy_val=ixHealthy_val,
-            ixCancer_val=ixCancer_val,
-            all_features=all_features,
-            top5_roc=top5_roc,
-            top5_kruskall=top5_kruskall,
-            X_pca_train=X_pca,    # <<< Passed X_pca_train
-            X_pca_val=X_pca_val,  # <<< Passed X_pca_val
-            LD1_train=lda,        # <<< Passed LD1_train
-            LD1_val=lda_val       # <<< Passed LD1_val
-        )
+    # 6a. K-FOLD cross-validated search (train-only)
+    best_params_kfold, metrics_summary_kfold = search_optimal_params_kfold(
+        train_data=train_data,              # pandas DataFrame with training rows only
+        all_features=all_features,          # list of original feature column names
+        top5_roc=top5_roc,                  # list of top-5 ROC columns
+        top5_kruskall=top5_kruskall,         # list of top-5 KW columns
+        k=5,                                 # number of folds
+        X_pca_all=X_pca,                   # numpy array aligned to train_data rows
+        LD1_all=lda,                       # numpy array (N x 1) aligned to train_data rows
+        progress_every=10,                  # print progress more frequently
+        enable_custom_svm=False,
+    )
+
+    print("\nBest hyperparameters (k-fold):")
+    for key, val in best_params_kfold.items():
+        print(f"  {key}: {val}")
+    print("\nMetrics summary (avg over folds):")
+    for feat_set, methods in metrics_summary_kfold.items():
+        print(f"[{feat_set}]")
+        for method, mets in methods.items():
+            print(f"  {method}: avg F1={mets['avg_f1']*100:.2f}% | avg Acc={mets['avg_acc']*100:.2f}%")
+    """
+    # 6b. Hold-out search using explicit validation split
+    print("\nRunning hold-out hyperparameter search (train vs val)...")
+    best_params_holdout = search_optimal_params(
+        train_data=train_data,
+        val_data=val_data,
+        ixHealthy_train=ixHealthy_train,
+        ixCancer_train=ixCancer_train,
+        ixHealthy_val=ixHealthy_val,
+        ixCancer_val=ixCancer_val,
+        all_features=all_features,
+        top5_roc=top5_roc,
+        top5_kruskall=top5_kruskall,
+        X_pca_train=X_pca,
+        X_pca_val=X_pca_val,
+        LD1_train=lda,
+        LD1_val=lda_val,
+        enable_custom_svm=False,
+        early_stop_patience=6,
+        early_stop_min_delta=0.05,
+        early_stop_warmup_linear=12,
+        early_stop_warmup_rbf_c=4,
+        early_stop_warmup_rbf_gamma=12
         
+    )
+
+    print("\nBest hyperparameters (hold-out):")
+    for key, val in best_params_holdout.items():
+        print(f"  {key}: {val}")
     print("\n--- HYPERPARAMETER SEARCH COMPLETE ---")
+    """
+
+    # Return best params along with analysis results so wrappers can use one_run()
+    # best_params_kfold may be undefined if k-fold block is commented; return None for consistency
+    return roc, H_results, fnames, None, best_params_kfold
     # try:
 
         
@@ -294,8 +336,7 @@ def run_all_classifiers_multiple_times():
 
 
 
-
-
 if __name__ == "__main__":
     one_run()
     #run_all_classifiers_multiple_times()
+    #grid_search_multiple_times()

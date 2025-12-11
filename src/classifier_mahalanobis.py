@@ -39,6 +39,35 @@ def train_mahalanobis_distance(feature_names, method_name="Unknown", data=None, 
         "mu_cancer": mu_cancer,
         "inv_cov": inv_cov
     }
+    # Print training metrics
+    X_train = np.concatenate([X_healthy, X_cancer], axis=0)
+    y_train = np.concatenate([np.zeros(len(X_healthy)), np.ones(len(X_cancer))])
+    if X_train.shape[1] == 1:
+        muH = mu_healthy.flatten()
+        muC = mu_cancer.flatten()
+        inv_cov_s = inv_cov
+        dx = ((X_train.flatten() - 0.5*(muH + muC)) * (muC - muH)) * inv_cov_s
+    else:
+        dx = ((mu_cancer - mu_healthy).T @ inv_cov @ (X_train.T - 0.5*(mu_cancer + mu_healthy)[:, np.newaxis])).flatten()
+    y_pred_tr = (dx > 0).astype(int)
+    TP = np.sum((y_train == 1) & (y_pred_tr == 1))
+    TN = np.sum((y_train == 0) & (y_pred_tr == 0))
+    FP = np.sum((y_train == 0) & (y_pred_tr == 1))
+    FN = np.sum((y_train == 1) & (y_pred_tr == 0))
+    sensitivity = TP / (TP + FN) if TP + FN > 0 else 0
+    specificity = TN / (TN + FP) if TN + FP > 0 else 0
+    precision   = TP / (TP + FP) if TP + FP > 0 else 0
+    f1          = 2 * (precision * sensitivity) / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
+    accuracy    = (TP + TN) / (TP + TN + FP + FN)
+    from sklearn.metrics import roc_curve, auc
+    fpr, tpr, _ = roc_curve(y_train, dx)
+    roc_auc = auc(fpr, tpr)
+    print(f"[Train] Sensitivity (%) = {sensitivity * 100:.2f}")
+    print(f"[Train] Specificity (%) = {specificity * 100:.2f}")
+    print(f"[Train] Precision (%) = {precision * 100:.2f}")
+    print(f"[Train] F1 Score (%) = {f1 * 100:.2f}")
+    print(f"[Train] Accuracy (%) = {accuracy * 100:.2f}")
+    print(f"[Train] ROC-AUC (%) = {roc_auc * 100:.2f}")
     return model
 
 
