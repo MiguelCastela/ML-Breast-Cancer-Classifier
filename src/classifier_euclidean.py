@@ -54,7 +54,15 @@ def train_euclidean_distance(feature_names, method_name="Unknown", data=None, ix
     print(f"[Train] Accuracy (%) = {accuracy * 100:.2f}")
     print(f"[Train] ROC-AUC (%) = {roc_auc * 100:.2f}")
 
-    return model
+    return (
+        model,
+        accuracy,
+        sensitivity,
+        specificity,
+        precision,
+        f1,
+        roc_auc,
+    )
 
 def test_euclidean_distance(model, data=None , ixHealthy=None, ixCancer=None):
 

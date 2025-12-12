@@ -21,27 +21,27 @@ from grid_search import (
 from sklearn.metrics import accuracy_score, f1_score  
 from sklearn.model_selection import StratifiedKFold
 
-#KNN
-KNN_K_LIST = np.arange(1, 30, 2) # Odd values from 1 to 29
+#KNN (trimmed)
+KNN_K_LIST = [1, 3, 5, 7, 9, 11, 13, 15, 17]
 
-# C list for SVM (both Linear and RBF)
-SVM_C_LIST_LINEAR = [2**i for i in range(-20, 15)]
-SVM_C_LIST_RBF = [2**i for i in range(-10, 15)]
+# C list for SVM (both Linear and RBF) (trimmed)
+SVM_C_LIST_LINEAR = [0.03125, 0.125, 0.5, 1.0, 2.0, 8.0, 32.0]
+SVM_C_LIST_RBF = [0.03125, 0.125, 0.5, 1.0, 2.0, 8.0, 32.0]
 
-# Gamma list: RBF SVM (como o stor no corkstoppers que tem 162)
-SVM_GAMMA_LIST = [2**i for i in range(-25, 1)]
+# Gamma list: RBF SVM (trimmed, centered around reasonable ranges)
+SVM_GAMMA_LIST = [0.0625, 0.125, 0.25, 0.5, 1.0]
 
-# Decision Tree
-DT_DEPTH_LIST = [i for i in range(1, 50)]
+# Decision Tree (trimmed)
+DT_DEPTH_LIST = [1, 2, 3, 4, 5, 7, 10, 15]
 DT_CRITERION_LIST = ['gini', 'entropy']
 
-# AdaBoost
-AB_N_EST_LIST = [10, 25, 50, 75, 100, 150, 200]
-AB_LR_LIST = [0.01, 0.015, 0.025, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 1.0]
+# AdaBoost (trimmed)
+AB_N_EST_LIST = [10, 25, 50, 75]
+AB_LR_LIST = [0.05, 0.1, 0.2]
 
-# Random Forest
-RF_N_EST_LIST = [i for i in range(50, 251, 50)]
-RF_MAX_DEPTH_LIST = [i for i in range(1, 50)]
+# Random Forest (trimmed)
+RF_N_EST_LIST = [15, 25, 50, 100]
+RF_MAX_DEPTH_LIST = [1, 2, 3, 4, 5, 7, 10, 15]
 
 def get_y_arrays_from_ixs(ixs):
     """Converts (ixHealthy, ixCancer) tuple to a 0/1 label array."""
@@ -176,18 +176,32 @@ def search_optimal_params_kfold(train_data, all_features, top5_roc, top5_kruskal
                 errs.append(err)
             return float(np.mean(errs)), float(np.std(errs))
 
-        # Helper to average F1 and Accuracy across folds for a given model builder
-        def avg_metrics_over_folds(build_fn):
-            f1s = []
-            accs = []
+        # Helper to compute train/val avg and std for F1 and Acc across folds
+        def avg_train_val_metrics_over_folds(build_fn):
+            f1s_tr, accs_tr = [], []
+            f1s_va, accs_va = [], []
             for train_idx, val_idx in skf.split(X_all, y_all):
                 X_tr, X_va = X_all[train_idx], X_all[val_idx]
                 y_tr, y_va = y_all[train_idx], y_all[val_idx]
                 clf = build_fn(X_tr, y_tr)
-                y_pred = clf.predict(X_va)
-                f1s.append(f1_score(y_va, y_pred))
-                accs.append(accuracy_score(y_va, y_pred))
-            return float(np.mean(f1s)), float(np.mean(accs))
+                # Train predictions (on training fold)
+                y_pred_tr = clf.predict(X_tr)
+                f1s_tr.append(f1_score(y_tr, y_pred_tr))
+                accs_tr.append(accuracy_score(y_tr, y_pred_tr))
+                # Validation predictions (on held-out fold)
+                y_pred_va = clf.predict(X_va)
+                f1s_va.append(f1_score(y_va, y_pred_va))
+                accs_va.append(accuracy_score(y_va, y_pred_va))
+            return {
+                'train_avg_f1': float(np.mean(f1s_tr)),
+                'train_std_f1': float(np.std(f1s_tr)),
+                'train_avg_acc': float(np.mean(accs_tr)),
+                'train_std_acc': float(np.std(accs_tr)),
+                'val_avg_f1': float(np.mean(f1s_va)),
+                'val_std_f1': float(np.std(f1s_va)),
+                'val_avg_acc': float(np.mean(accs_va)),
+                'val_std_acc': float(np.std(accs_va)),
+            }
 
         # 1. KNN
         best_err = np.inf
@@ -216,9 +230,16 @@ def search_optimal_params_kfold(train_data, all_features, top5_roc, top5_kruskal
             knn = KNeighborsClassifier(n_neighbors=k)
             knn.fit(Xtr, ytr)
             return knn
-        avg_f1_knn, avg_acc_knn = avg_metrics_over_folds(lambda Xtr, ytr: _build_knn(Xtr, ytr, best_k))
-        print(f"  -> Optimal K: {best_k} | avg F1={avg_f1_knn*100:.2f}% avg Acc={avg_acc_knn*100:.2f}% (avg 1-F1 err {best_err:.2f}%)")
-        metrics_summary[name]['KNN'] = {'avg_f1': avg_f1_knn, 'avg_acc': avg_acc_knn}
+        knn_mets = avg_train_val_metrics_over_folds(lambda Xtr, ytr: _build_knn(Xtr, ytr, best_k))
+        print(
+            f"  -> Optimal K: {best_k} | "
+            f"train F1={knn_mets['train_avg_f1']*100:.2f}%±{knn_mets['train_std_f1']*100:.2f}% "
+            f"train Acc={knn_mets['train_avg_acc']*100:.2f}%±{knn_mets['train_std_acc']*100:.2f}% | "
+            f"val F1={knn_mets['val_avg_f1']*100:.2f}%±{knn_mets['val_std_f1']*100:.2f}% "
+            f"val Acc={knn_mets['val_avg_acc']*100:.2f}%±{knn_mets['val_std_acc']*100:.2f}% "
+            f"(avg 1-F1 err {best_err:.2f}%)"
+        )
+        metrics_summary[name]['KNN'] = knn_mets
 
         # 2. Linear SVM (C)
         best_err = np.inf
@@ -249,9 +270,16 @@ def search_optimal_params_kfold(train_data, all_features, top5_roc, top5_kruskal
             clf = SVC(kernel="linear", C=C_val, random_state=42)
             clf.fit(Xtr, ytr)
             return clf
-        avg_f1_lin, avg_acc_lin = avg_metrics_over_folds(lambda Xtr, ytr: _build_svm_lin(Xtr, ytr, best_c_lin))
-        print(f"  -> Optimal C (Linear SVM): {best_c_lin} | avg F1={avg_f1_lin*100:.2f}% avg Acc={avg_acc_lin*100:.2f}% (avg 1-F1 err {best_err:.2f}%)")
-        metrics_summary[name]['SVM_Linear'] = {'avg_f1': avg_f1_lin, 'avg_acc': avg_acc_lin}
+        lin_mets = avg_train_val_metrics_over_folds(lambda Xtr, ytr: _build_svm_lin(Xtr, ytr, best_c_lin))
+        print(
+            f"  -> Optimal C (Linear SVM): {best_c_lin} | "
+            f"train F1={lin_mets['train_avg_f1']*100:.2f}%±{lin_mets['train_std_f1']*100:.2f}% "
+            f"train Acc={lin_mets['train_avg_acc']*100:.2f}%±{lin_mets['train_std_acc']*100:.2f}% | "
+            f"val F1={lin_mets['val_avg_f1']*100:.2f}%±{lin_mets['val_std_f1']*100:.2f}% "
+            f"val Acc={lin_mets['val_avg_acc']*100:.2f}%±{lin_mets['val_std_acc']*100:.2f}% "
+            f"(avg 1-F1 err {best_err:.2f}%)"
+        )
+        metrics_summary[name]['SVM_Linear'] = lin_mets
 
         # 2b. Custom SVM (SMO) using same C grid, averaged across folds (optional)
         if enable_custom_svm:
@@ -311,9 +339,16 @@ def search_optimal_params_kfold(train_data, all_features, top5_roc, top5_kruskal
             clf.fit(Xtr, ytr)
             return clf
         if best_c_rbf is not None and best_g_rbf is not None:
-            avg_f1_rbf, avg_acc_rbf = avg_metrics_over_folds(lambda Xtr, ytr: _build_svm_rbf(Xtr, ytr, best_c_rbf, best_g_rbf))
-            print(f"  -> Optimal RBF: C={best_c_rbf}, gamma={best_g_rbf} | avg F1={avg_f1_rbf*100:.2f}% avg Acc={avg_acc_rbf*100:.2f}% (avg 1-F1 err {best_err:.2f}%)")
-            metrics_summary[name]['SVM_RBF'] = {'avg_f1': avg_f1_rbf, 'avg_acc': avg_acc_rbf}
+            rbf_mets = avg_train_val_metrics_over_folds(lambda Xtr, ytr: _build_svm_rbf(Xtr, ytr, best_c_rbf, best_g_rbf))
+            print(
+                f"  -> Optimal RBF: C={best_c_rbf}, gamma={best_g_rbf} | "
+                f"train F1={rbf_mets['train_avg_f1']*100:.2f}%±{rbf_mets['train_std_f1']*100:.2f}% "
+                f"train Acc={rbf_mets['train_avg_acc']*100:.2f}%±{rbf_mets['train_std_acc']*100:.2f}% | "
+                f"val F1={rbf_mets['val_avg_f1']*100:.2f}%±{rbf_mets['val_std_f1']*100:.2f}% "
+                f"val Acc={rbf_mets['val_avg_acc']*100:.2f}%±{rbf_mets['val_std_acc']*100:.2f}% "
+                f"(avg 1-F1 err {best_err:.2f}%)"
+            )
+            metrics_summary[name]['SVM_RBF'] = rbf_mets
         else:
             print(f"  -> Optimal RBF: C={best_c_rbf}, gamma={best_g_rbf} (avg 1-F1 err {best_err:.2f}%)")
 
@@ -349,9 +384,16 @@ def search_optimal_params_kfold(train_data, all_features, top5_roc, top5_kruskal
             clf = DecisionTreeClassifier(max_depth=depth, criterion=crit, random_state=42)
             clf.fit(Xtr, ytr)
             return clf
-        avg_f1_dt, avg_acc_dt = avg_metrics_over_folds(lambda Xtr, ytr: _build_dt(Xtr, ytr, best_dt['max_depth'], best_dt['criterion']))
-        print(f"  -> Optimal DT: {best_dt} | avg F1={avg_f1_dt*100:.2f}% avg Acc={avg_acc_dt*100:.2f}% (avg 1-F1 err {best_err:.2f}%)")
-        metrics_summary[name]['DT'] = {'avg_f1': avg_f1_dt, 'avg_acc': avg_acc_dt}
+        dt_mets = avg_train_val_metrics_over_folds(lambda Xtr, ytr: _build_dt(Xtr, ytr, best_dt['max_depth'], best_dt['criterion']))
+        print(
+            f"  -> Optimal DT: {best_dt} | "
+            f"train F1={dt_mets['train_avg_f1']*100:.2f}%±{dt_mets['train_std_f1']*100:.2f}% "
+            f"train Acc={dt_mets['train_avg_acc']*100:.2f}%±{dt_mets['train_std_acc']*100:.2f}% | "
+            f"val F1={dt_mets['val_avg_f1']*100:.2f}%±{dt_mets['val_std_f1']*100:.2f}% "
+            f"val Acc={dt_mets['val_avg_acc']*100:.2f}%±{dt_mets['val_std_acc']*100:.2f}% "
+            f"(avg 1-F1 err {best_err:.2f}%)"
+        )
+        metrics_summary[name]['DT'] = dt_mets
 
         # 5. AdaBoost (sklearn)
         best_err = np.inf
@@ -384,9 +426,16 @@ def search_optimal_params_kfold(train_data, all_features, top5_roc, top5_kruskal
             clf = AdaBoostClassifier(n_estimators=n, learning_rate=r, random_state=42)
             clf.fit(Xtr, ytr)
             return clf
-        avg_f1_ab, avg_acc_ab = avg_metrics_over_folds(lambda Xtr, ytr: _build_ab(Xtr, ytr, best_ab['n_estimators'], best_ab['learning_rate']))
-        print(f"  -> Optimal AB: {best_ab} | avg F1={avg_f1_ab*100:.2f}% avg Acc={avg_acc_ab*100:.2f}% (avg 1-F1 err {best_err:.2f}%)")
-        metrics_summary[name]['AB_Sklearn'] = {'avg_f1': avg_f1_ab, 'avg_acc': avg_acc_ab}
+        ab_mets = avg_train_val_metrics_over_folds(lambda Xtr, ytr: _build_ab(Xtr, ytr, best_ab['n_estimators'], best_ab['learning_rate']))
+        print(
+            f"  -> Optimal AB: {best_ab} | "
+            f"train F1={ab_mets['train_avg_f1']*100:.2f}%±{ab_mets['train_std_f1']*100:.2f}% "
+            f"train Acc={ab_mets['train_avg_acc']*100:.2f}%±{ab_mets['train_std_acc']*100:.2f}% | "
+            f"val F1={ab_mets['val_avg_f1']*100:.2f}%±{ab_mets['val_std_f1']*100:.2f}% "
+            f"val Acc={ab_mets['val_avg_acc']*100:.2f}%±{ab_mets['val_std_acc']*100:.2f}% "
+            f"(avg 1-F1 err {best_err:.2f}%)"
+        )
+        metrics_summary[name]['AB_Sklearn'] = ab_mets
 
         # 6. Random Forest
         best_err = np.inf
@@ -422,9 +471,16 @@ def search_optimal_params_kfold(train_data, all_features, top5_roc, top5_kruskal
             rf = RandomForestClassifier(n_estimators=n, max_depth=d, random_state=42, class_weight='balanced')
             rf.fit(Xtr, ytr)
             return rf
-        avg_f1_rf, avg_acc_rf = avg_metrics_over_folds(lambda Xtr, ytr: _build_rf(Xtr, ytr, best_rf['n_estimators'], best_rf['max_depth']))
-        print(f"  -> Optimal RF: {best_rf} | avg F1={avg_f1_rf*100:.2f}% avg Acc={avg_acc_rf*100:.2f}% (avg 1-F1 err {best_err:.2f}%)")
-        metrics_summary[name]['RF'] = {'avg_f1': avg_f1_rf, 'avg_acc': avg_acc_rf}
+        rf_mets = avg_train_val_metrics_over_folds(lambda Xtr, ytr: _build_rf(Xtr, ytr, best_rf['n_estimators'], best_rf['max_depth']))
+        print(
+            f"  -> Optimal RF: {best_rf} | "
+            f"train F1={rf_mets['train_avg_f1']*100:.2f}%±{rf_mets['train_std_f1']*100:.2f}% "
+            f"train Acc={rf_mets['train_avg_acc']*100:.2f}%±{rf_mets['train_std_acc']*100:.2f}% | "
+            f"val F1={rf_mets['val_avg_f1']*100:.2f}%±{rf_mets['val_std_f1']*100:.2f}% "
+            f"val Acc={rf_mets['val_avg_acc']*100:.2f}%±{rf_mets['val_std_acc']*100:.2f}% "
+            f"(avg 1-F1 err {best_err:.2f}%)"
+        )
+        metrics_summary[name]['RF'] = rf_mets
 
     print("\n\n--- OPTIMAL PARAMETERS SUMMARY (K-Fold) ---")
     for key, val in optimal_params.items():
@@ -432,10 +488,16 @@ def search_optimal_params_kfold(train_data, all_features, top5_roc, top5_kruskal
     print("-" * 60)
     print("Note: Selection now optimizes F1 (not Accuracy).")
 
-    print("\n--- METRICS SUMMARY (avg over folds) ---")
+    print("\n--- METRICS SUMMARY (train/val avg±std over folds) ---")
     for feat_set, methods in metrics_summary.items():
         print(f"[{feat_set}]")
-        for method, mets in methods.items():
-            print(f"  {method}: avg F1={mets['avg_f1']*100:.2f}% | avg Acc={mets['avg_acc']*100:.2f}%")
+        for method, m in methods.items():
+            print(
+                f"  {method}: "
+                f"train F1={m['train_avg_f1']*100:.2f}%±{m['train_std_f1']*100:.2f}% | "
+                f"train Acc={m['train_avg_acc']*100:.2f}%±{m['train_std_acc']*100:.2f}% | "
+                f"val F1={m['val_avg_f1']*100:.2f}%±{m['val_std_f1']*100:.2f}% | "
+                f"val Acc={m['val_avg_acc']*100:.2f}%±{m['val_std_acc']*100:.2f}%"
+            )
 
     return optimal_params, metrics_summary

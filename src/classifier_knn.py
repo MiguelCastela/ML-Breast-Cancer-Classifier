@@ -55,8 +55,15 @@ def train_knn(feature_names, method_name="Unknown", data=None, ixHealthy=None, i
         "clf": clf,
         "n_neighbors": n_neighbors
     }
-
-    return model
+    return (
+        model,
+        accuracy,
+        sensitivity,
+        specificity,
+        precision,
+        f1,
+        roc_auc,
+    )
 
 def test_knn(model, data=None , ixHealthy=None, ixCancer=None):
     """

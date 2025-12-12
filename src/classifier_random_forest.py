@@ -65,7 +65,15 @@ def train_random_forest(feature_names, method_name="Unknown", data=None, ixHealt
         "max_depth": max_depth
     }
 
-    return model
+    return (
+        model,
+        accuracy,
+        sensitivity,
+        specificity,
+        precision,
+        f1,
+        roc_auc,
+    )
 
 def test_random_forest(model, data=None , ixHealthy=None, ixCancer=None):
     """

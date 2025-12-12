@@ -194,7 +194,15 @@ def train_svm_custom(feature_names, method_name="Unknown", data=None, ixHealthy=
     print(f"[Train] Accuracy (%) = {accuracy * 100:.2f}")
     print(f"[Train] ROC-AUC (%) = {roc_auc * 100:.2f}")
 
-    return model
+    return (
+        model,
+        accuracy,
+        sensitivity,
+        specificity,
+        precision,
+        f1,
+        roc_auc,
+    )
 
 
 
@@ -255,7 +263,15 @@ def train_svm_linear(feature_names, method_name="Unknown", data=None, ixHealthy=
     print(f"[Train] Accuracy (%) = {accuracy * 100:.2f}")
     print(f"[Train] ROC-AUC (%) = {roc_auc * 100:.2f}")
 
-    return model
+    return (
+        model,
+        accuracy,
+        sensitivity,
+        specificity,
+        precision,
+        f1,
+        roc_auc,
+    )
 
 
 
@@ -311,7 +327,15 @@ def train_svm_rbf_kernel(feature_names, method_name="Unknown", data=None, ixHeal
     print(f"[Train] Accuracy (%) = {accuracy * 100:.2f}")
     print(f"[Train] ROC-AUC (%) = {roc_auc * 100:.2f}")
 
-    return model
+    return (
+        model,
+        accuracy,
+        sensitivity,
+        specificity,
+        precision,
+        f1,
+        roc_auc,
+    )
 
 
 

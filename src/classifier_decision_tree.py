@@ -5,8 +5,8 @@ from sklearn.tree import DecisionTreeClassifier, plot_tree
 
 
 
-def train_decision_tree(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None, max_depth=5):
-    #meter estes parametros para a grid search:criterion='gini', max_depth=None,min_samples_split=2,min_samples_leaf=1,max_features=None,max_leaf_nodes=None
+def train_decision_tree(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None, max_depth=5, criterion='gini'):
+
     """
     Trains a Decision Tree classifier.
     """
@@ -49,7 +49,7 @@ def train_decision_tree(feature_names, method_name="Unknown", data=None, ixHealt
     y_train = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))]) # 0=Healthy, 1=Cancer
 
     # Fit Decision Tree model
-    clf = DecisionTreeClassifier(max_depth=max_depth, random_state=42)
+    clf = DecisionTreeClassifier(max_depth=max_depth, criterion=criterion)
     clf.fit(X_train, y_train)
 
     # Print training metrics
@@ -79,8 +79,15 @@ def train_decision_tree(feature_names, method_name="Unknown", data=None, ixHealt
         "clf": clf,
         "max_depth": max_depth
     }
-
-    return model
+    return (
+        model,
+        accuracy,
+        sensitivity,
+        specificity,
+        precision,
+        f1,
+        roc_auc,
+    )
 
 def test_decision_tree(model, data=None , ixHealthy=None, ixCancer=None):
     """

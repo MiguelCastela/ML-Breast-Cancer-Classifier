@@ -60,7 +60,7 @@ def train_bayesian_classifier(feature_names, method_name="Unknown", data=None , 
 
 
 
-    model = {
+    model_basic = {
         "feature_names": feature_names,
         "classes": (0, 1)  # 0=Healthy, 1=Cancer
     }
@@ -173,8 +173,38 @@ def train_bayesian_classifier(feature_names, method_name="Unknown", data=None , 
         "Pw0": Pw0,     # Healthy prior
         "Pw1": Pw1      # Cancer prior
     }
+    # Compute training metrics using log-posteriors on X_train
+    logp0_tr = multivariate_normal.logpdf(X_train, mean=mean1, cov=cov1) + np.log(Pw0)
+    logp1_tr = multivariate_normal.logpdf(X_train, mean=mean2, cov=cov2) + np.log(Pw1)
+    y_pred_tr = np.where(logp1_tr >= logp0_tr, 1, 0)
+    decision_scores_tr = logp1_tr - logp0_tr
+    TP = np.sum((y_train == 1) & (y_pred_tr == 1))
+    TN = np.sum((y_train == 0) & (y_pred_tr == 0))
+    FP = np.sum((y_train == 0) & (y_pred_tr == 1))
+    FN = np.sum((y_train == 1) & (y_pred_tr == 0))
+    sensitivity = TP / (TP + FN) if (TP + FN) > 0 else 0
+    specificity = TN / (TN + FP) if (TN + FP) > 0 else 0
+    precision = TP / (TP + FP) if (TP + FP) > 0 else 0
+    f1 = 2 * (precision * sensitivity) / (precision + sensitivity) if (precision + sensitivity) > 0 else 0
+    accuracy = (TP + TN) / (TP + TN + FP + FN)
+    fpr, tpr, _ = roc_curve(y_train, decision_scores_tr)
+    roc_auc = auc(fpr, tpr)
+    print(f"[Train] Sensitivity (%) = {sensitivity * 100:.2f}")
+    print(f"[Train] Specificity (%) = {specificity * 100:.2f}")
+    print(f"[Train] Precision (%) = {precision * 100:.2f}")
+    print(f"[Train] F1 Score (%) = {f1 * 100:.2f}")
+    print(f"[Train] Accuracy (%) = {accuracy * 100:.2f}")
+    print(f"[Train] ROC-AUC (%) = {roc_auc * 100:.2f}")
 
-    return model
+    return (
+        model,
+        accuracy,
+        sensitivity,
+        specificity,
+        precision,
+        f1,
+        roc_auc,
+    )
 
 
 def test_bayesian_gaussian(model, data=None , ixHealthy=None, ixCancer=None):

@@ -85,13 +85,23 @@ def train_fisher_lda(feature_names, method_name="Unknown", data=None , ixHealthy
     print(f"[Train] Accuracy (%) = {accuracy * 100:.2f}")
     print(f"[Train] ROC-AUC (%) = {roc_auc * 100:.2f}")
 
-    return{
+    model = {
         "w": w,
         "b": b,
         "feature_names": feature_names,
         "mu_healthy": mu_healthy,
         "mu_cancer": mu_cancer
     }
+
+    return (
+        model,
+        accuracy,
+        sensitivity,
+        specificity,
+        precision,
+        f1,
+        roc_auc,
+    )
 
 
 

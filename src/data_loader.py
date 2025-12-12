@@ -36,7 +36,7 @@ def get_random_train_test_split():
     X = dados[fnames]
     y = dados["Classification"]
 
-    random_seed = 22
+    random_seed = np.random.randint(0, 10000)
 
     X_train, X_temp, y_train, y_temp = train_test_split(
         X, y,

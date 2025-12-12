@@ -18,6 +18,8 @@ from plotly.subplots import make_subplots
 from data_loader import get_random_train_test_split
 from run_grid_search import search_optimal_params_kfold
 from collections import Counter
+import random
+from collections import defaultdict, Counter
 
 
 def one_run():
@@ -196,6 +198,7 @@ def one_run():
 
     
     # 6a. K-FOLD cross-validated search (train-only)
+    """
     best_params_kfold, metrics_summary_kfold = search_optimal_params_kfold(
         train_data=train_data,              # pandas DataFrame with training rows only
         all_features=all_features,          # list of original feature column names
@@ -211,84 +214,62 @@ def one_run():
     print("\nBest hyperparameters (k-fold):")
     for key, val in best_params_kfold.items():
         print(f"  {key}: {val}")
-    print("\nMetrics summary (avg over folds):")
+    print("\nMetrics summary (train/val avg±std over folds):")
     for feat_set, methods in metrics_summary_kfold.items():
         print(f"[{feat_set}]")
-        for method, mets in methods.items():
-            print(f"  {method}: avg F1={mets['avg_f1']*100:.2f}% | avg Acc={mets['avg_acc']*100:.2f}%")
+        for method, m in methods.items():
+            print(
+                f"  {method}: "
+                f"train F1={m['train_avg_f1']*100:.2f}%±{m['train_std_f1']*100:.2f}% | "
+                f"train Acc={m['train_avg_acc']*100:.2f}%±{m['train_std_acc']*100:.2f}% | "
+                f"val F1={m['val_avg_f1']*100:.2f}%±{m['val_std_f1']*100:.2f}% | "
+                f"val Acc={m['val_avg_acc']*100:.2f}%±{m['val_std_acc']*100:.2f}%"
+            )
+
+
+    # Return metrics to be consumed by multi-run aggregator
+    return roc, H_results, fnames, best_params_kfold, metrics_summary_kfold
     """
-    # 6b. Hold-out search using explicit validation split
-    print("\nRunning hold-out hyperparameter search (train vs val)...")
-    best_params_holdout = search_optimal_params(
-        train_data=train_data,
-        val_data=val_data,
-        ixHealthy_train=ixHealthy_train,
-        ixCancer_train=ixCancer_train,
-        ixHealthy_val=ixHealthy_val,
-        ixCancer_val=ixCancer_val,
-        all_features=all_features,
-        top5_roc=top5_roc,
-        top5_kruskall=top5_kruskall,
-        X_pca_train=X_pca,
-        X_pca_val=X_pca_val,
-        LD1_train=lda,
-        LD1_val=lda_val,
-        enable_custom_svm=False,
-        early_stop_patience=6,
-        early_stop_min_delta=0.05,
-        early_stop_warmup_linear=12,
-        early_stop_warmup_rbf_c=4,
-        early_stop_warmup_rbf_gamma=12
-        
-    )
+    try:
 
-    print("\nBest hyperparameters (hold-out):")
-    for key, val in best_params_holdout.items():
-        print(f"  {key}: {val}")
-    print("\n--- HYPERPARAMETER SEARCH COMPLETE ---")
-    """
 
-    # Return best params along with analysis results so wrappers can use one_run()
-    # best_params_kfold may be undefined if k-fold block is commented; return None for consistency
-    return roc, H_results, fnames, None, best_params_kfold
-    # try:
-
+        classifier_results, train_results = run_all_classifiers(
+            train_data=train_data,
+            test_data=test_data,
+            ixHealthy_train=ixHealthy_train,
+            ixCancer_train=ixCancer_train,
+            ixHealthy_test=ixHealthy_test,
+            ixCancer_test=ixCancer_test,
+            all_features=all_features,
+            top5_roc=top5_roc,
+            top5_kruskall=top5_kruskall,
+            X_pca_train=X_pca,
+            X_pca_test=X_pca_test,
+            LD1_train=lda,
+            LD1_test=lda_test_values
+        )
         
-    #     classifier_results = run_all_classifiers(
-    #         train_data=train_data,
-    #         test_data=test_data,
-    #         ixHealthy_train=ixHealthy_train,
-    #         ixCancer_train=ixCancer_train,
-    #         ixHealthy_test=ixHealthy_test,
-    #         ixCancer_test=ixCancer_test,
-    #         all_features=all_features,
-    #         top5_roc=top5_roc,
-    #         top5_kruskall=top5_kruskall,
-    #         X_pca_train=X_pca,
-    #         X_pca_test=X_pca_test,
-    #         LD1_train=lda,
-    #         LD1_test=lda_test_values
-    #     )
-        
-    #     print("\n" + "="*60)
-    #     print("CLASSIFIER RESULTS SUMMARY")
-    #     print("="*60)
+        print("\n" + "="*60)
+        print("CLASSIFIER RESULTS SUMMARY")
+        print("="*60)
 
     
-    # except Exception as e:
-    #     print(f"Classifier analysis failed: {e}")
-    #     import traceback
-    #     traceback.print_exc()
+    except Exception as e:
+        print(f"Classifier analysis failed: {e}")
+        import traceback
+        traceback.print_exc()
+
 
     print("\n" + "=" * 60)
     print("COMPLETED")
     print("=" * 60)
 
-    return roc, H_results, fnames
+    return classifier_results, train_results, roc, H_results, fnames
 
 
 def run_all_classifiers_multiple_times():
-    all_results = {}
+    all_test_results = {}
+    all_train_results = {}
     roc_results = []
     H_results_all = []
     fnames = []
@@ -296,7 +277,7 @@ def run_all_classifiers_multiple_times():
     for run in range(n_runs):
         print(f"\n--- Run {run + 1} ---")
 
-        classifier_results, roc, H_results, fnames = one_run()
+        classifier_results, train_results, roc, H_results, fnames = one_run()
 
         roc_results.append({fnames[i]: val for i, val in enumerate(roc)})
         H_results_all.append({f[0]: f[1] for f in H_results})
@@ -307,19 +288,43 @@ def run_all_classifiers_multiple_times():
     
 
         for key, metrics in classifier_results.items():
-            if key not in all_results:
-                all_results[key] = []   
-            all_results[key].append(metrics)
+            if key not in all_test_results:
+                all_test_results[key] = []
+            all_test_results[key].append(metrics)
 
-    # Compute mean metrics
-    mean_results = {k: tuple(np.mean(v, axis=0)) for k, v in all_results.items()}
+        for key, metrics in train_results.items():
+            if key not in all_train_results:
+                all_train_results[key] = []
+            all_train_results[key].append(metrics)
 
-    # Print mean results
-    print("\n=== Average metrics over", n_runs, "runs ===")
-    for clf, metrics in mean_results.items():
-        print(f"{clf}: Accuracy={metrics[0]:.3f}, Sensitivity={metrics[1]:.3f}, "
-            f"Specificity={metrics[2]:.3f}, Precision={metrics[3]:.3f}, "
-            f"F1={metrics[4]:.3f}, ROC-AUC={metrics[5]:.3f}")
+    # Compute mean and std metrics
+    mean_test_results = {k: tuple(np.mean(v, axis=0)) for k, v in all_test_results.items()}
+    std_test_results = {k: tuple(np.std(v, axis=0, ddof=0)) for k, v in all_test_results.items()}
+    mean_train_results = {k: tuple(np.mean(v, axis=0)) for k, v in all_train_results.items()}
+    std_train_results = {k: tuple(np.std(v, axis=0, ddof=0)) for k, v in all_train_results.items()}
+
+    # Print mean ± std results
+    print("\n=== TEST metrics over", n_runs, "runs (mean ± std) ===")
+    for clf in mean_test_results.keys():
+        m = mean_test_results[clf]
+        s = std_test_results[clf]
+        print(
+            f"{clf}: "
+            f"Accuracy={m[0]:.3f}±{s[0]:.3f}, Sensitivity={m[1]:.3f}±{s[1]:.3f}, "
+            f"Specificity={m[2]:.3f}±{s[2]:.3f}, Precision={m[3]:.3f}±{s[3]:.3f}, "
+            f"F1={m[4]:.3f}±{s[4]:.3f}, ROC-AUC={m[5]:.3f}±{s[5]:.3f}"
+        )
+
+    print("\n=== TRAIN metrics over", n_runs, "runs (mean ± std) ===")
+    for clf in mean_train_results.keys():
+        m = mean_train_results[clf]
+        s = std_train_results[clf]
+        print(
+            f"{clf}: "
+            f"Accuracy={m[0]:.3f}±{s[0]:.3f}, Sensitivity={m[1]:.3f}±{s[1]:.3f}, "
+            f"Specificity={m[2]:.3f}±{s[2]:.3f}, Precision={m[3]:.3f}±{s[3]:.3f}, "
+            f"F1={m[4]:.3f}±{s[4]:.3f}, ROC-AUC={m[5]:.3f}±{s[5]:.3f}"
+        )
     
     
     median_roc_values = {f: np.median([run[f] for run in roc_results]) for f in all_features}
@@ -334,9 +339,95 @@ def run_all_classifiers_multiple_times():
     for f, val in sorted(median_H_values.items(), key=lambda x: x[1], reverse=True):
         print(f"{f} --> {val:.4f}")
 
+def run_kfold_hyperparam_multiple_times(n_runs=5):
 
+    agg_metrics = defaultdict(
+        lambda: defaultdict(
+            lambda: {
+                "train_f1": [], "train_acc": [],
+                "val_f1": [], "val_acc": []
+            }
+        )
+    )
+    param_votes = defaultdict(lambda: Counter())
+
+    for run in range(n_runs):
+        # Use one_run to generate a fresh split/seed and compute k-fold search
+        _roc, _H_results, _fnames, best_params_kfold, metrics_summary_kfold = one_run()
+
+        # Aggregate train and validation metrics across runs
+        for feat_set, methods in metrics_summary_kfold.items():
+            for method, m in methods.items():
+                agg_metrics[feat_set][method]["train_f1"].append(m.get("train_avg_f1", np.nan))
+                agg_metrics[feat_set][method]["train_acc"].append(m.get("train_avg_acc", np.nan))
+                agg_metrics[feat_set][method]["val_f1"].append(m.get("val_avg_f1", np.nan))
+                agg_metrics[feat_set][method]["val_acc"].append(m.get("val_avg_acc", np.nan))
+
+        # Count votes for parameters (majority vote per key)
+        for key, val in best_params_kfold.items():
+            param_votes[key][str(val)] += 1
+
+    # Compute aggregates: mean and std over runs
+    metrics_summary_over_runs = {}
+    for feat_set, methods in agg_metrics.items():
+        metrics_summary_over_runs[feat_set] = {}
+        for method, vals in methods.items():
+            tr_f1_arr = np.array(vals["train_f1"], dtype=float)
+            tr_acc_arr = np.array(vals["train_acc"], dtype=float)
+            f1_arr = np.array(vals["val_f1"], dtype=float)
+            acc_arr = np.array(vals["val_acc"], dtype=float)
+            metrics_summary_over_runs[feat_set][method] = {
+                "train_avg_f1": float(np.nanmean(tr_f1_arr)),
+                "train_std_f1": float(np.nanstd(tr_f1_arr)),
+                "train_avg_acc": float(np.nanmean(tr_acc_arr)),
+                "train_std_acc": float(np.nanstd(tr_acc_arr)),
+                "val_avg_f1": float(np.nanmean(f1_arr)),
+                "val_std_f1": float(np.nanstd(f1_arr)),
+                "val_avg_acc": float(np.nanmean(acc_arr)),
+                "val_std_acc": float(np.nanstd(acc_arr)),
+            }
+
+    # Decide winners via majority vote; tie → random
+    final_params = {}
+    winners_summary = {}
+    for key, counter in param_votes.items():
+        if not counter:
+            final_params[key] = None
+            winners_summary[key] = "no votes"
+            continue
+        most_common = counter.most_common()
+        if len(most_common) > 1 and most_common[0][1] == most_common[1][1]:
+            # tie: random among tied values
+            top_count = most_common[0][1]
+            tied_vals = [val for val, cnt in most_common if cnt == top_count]
+            chosen = random.choice(tied_vals)
+            final_params[key] = chosen
+            winners_summary[key] = f"random (tie) among {tied_vals} count={top_count}"
+        else:
+            chosen, cnt = most_common[0]
+            final_params[key] = chosen
+            winners_summary[key] = f"winner '{chosen}' with {cnt}/{n_runs} votes"
+
+    # Print concise summary
+    print("\n=== Aggregated Train/Validation Metrics over runs ===")
+    for feat_set, methods in metrics_summary_over_runs.items():
+        print(f"[{feat_set}]")
+        for method, m in methods.items():
+            print(
+                f"  {method}: "
+                f"train F1={m['train_avg_f1']*100:.2f}%±{m['train_std_f1']*100:.2f}% | "
+                f"train Acc={m['train_avg_acc']*100:.2f}%±{m['train_std_acc']*100:.2f}% | "
+                f"val F1={m['val_avg_f1']*100:.2f}%±{m['val_std_f1']*100:.2f}% | "
+                f"val Acc={m['val_avg_acc']*100:.2f}%±{m['val_std_acc']*100:.2f}%"
+            )
+
+    print("\n=== Majority-Vote Best Hyperparameters ===")
+    for key, val in final_params.items():
+        print(f"  {key}: {val} -> {winners_summary[key]}")
+
+    return metrics_summary_over_runs, final_params, winners_summary
 
 if __name__ == "__main__":
-    one_run()
-    #run_all_classifiers_multiple_times()
-    #grid_search_multiple_times()
+    #one_run()
+    run_all_classifiers_multiple_times()
+    #run_kfold_hyperparam_multiple_times(n_runs=5)

@@ -68,7 +68,15 @@ def train_mahalanobis_distance(feature_names, method_name="Unknown", data=None, 
     print(f"[Train] F1 Score (%) = {f1 * 100:.2f}")
     print(f"[Train] Accuracy (%) = {accuracy * 100:.2f}")
     print(f"[Train] ROC-AUC (%) = {roc_auc * 100:.2f}")
-    return model
+    return (
+        model,
+        accuracy,
+        sensitivity,
+        specificity,
+        precision,
+        f1,
+        roc_auc,
+    )
 
 
 def test_mahalanobis_distance(model, data=None , ixHealthy=None, ixCancer=None):
