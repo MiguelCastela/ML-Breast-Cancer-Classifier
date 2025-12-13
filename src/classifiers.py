@@ -55,7 +55,7 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
 
     # SVM (Linear)
     model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_svm_linear(all_features, method_name="All Features", 
-                             data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, C=2.0)
+                             data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, C=0.125)
     results['all_svm'] = test_svm_generic(model, data=test_data, 
                                   ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
     train_results['all_svm'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
@@ -63,7 +63,7 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
     # SVM (Custom Kernel)
 
     model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_svm_custom(all_features, method_name="All Features", 
-                             data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, C=2.0)
+                             data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, C=0.125)
     
     results['all_svm_custom'] = test_svm_generic(model, data=test_data, 
                                                ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
@@ -73,7 +73,7 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
 
     model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_svm_rbf_kernel(all_features, method_name="All Features",
                                     data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-                                    C=8.0, gamma=0.0625)
+                                    C=1.0, gamma=0.5)
     
     results['all_svm_rbf'] = test_svm_generic(model, data=test_data,
                                         ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
@@ -82,7 +82,7 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
     # KNN
     model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_knn(all_features, method_name="All Features", 
                       data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-                      n_neighbors=17)
+                      n_neighbors=7)
     results['all_knn'] = test_knn(model, data=test_data, 
                                   ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
     train_results['all_knn'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
@@ -90,7 +90,7 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
     # Decision Tree
     model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_decision_tree(all_features, method_name="All Features", 
                                 data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-                                max_depth=7, criterion='gini')
+                                max_depth=4, criterion='entropy')
     results['all_decision_tree'] = test_decision_tree(model, data=test_data, 
                                                       ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
     train_results['all_decision_tree'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
@@ -105,7 +105,7 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
     # AdaBoost
     model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_adaboost(all_features, method_name="All Features", 
                            data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-                           n_estimators=25, learning_rate=0.2)
+                           n_estimators=75, learning_rate=0.2)
     results['all_adaboost'] = test_adaboost(model, data=test_data, 
                                             ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
     train_results['all_adaboost'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
@@ -122,7 +122,7 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
     model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_random_forest(
         all_features, method_name="All Features",
         data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-        n_estimators=100, max_depth=7
+        n_estimators=25, max_depth=3
     )
     results['all_random_forest'] = test_random_forest(model, data=test_data,
                                                       ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
@@ -150,16 +150,16 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
         train_results['roc_svm_custom'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
         model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_svm_rbf_kernel(top5_roc, method_name="ROC-AUC", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-                         C=0.5, gamma=0.0625)
+                 C=8.0, gamma=0.0625)
         results['roc_svm_rbf'] = test_svm_generic(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['roc_svm_rbf'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
-        model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_knn(top5_roc, method_name="ROC-AUC", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, n_neighbors=5)
+        model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_knn(top5_roc, method_name="ROC-AUC", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, n_neighbors=3)
         results['roc_knn'] = test_knn(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['roc_knn'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
         model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_decision_tree(top5_roc, method_name="ROC-AUC", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-                        max_depth=2, criterion='gini')
+                max_depth=3, criterion='gini')
         results['roc_decision_tree'] = test_decision_tree(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['roc_decision_tree'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
@@ -168,7 +168,7 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
         train_results['roc_bayes'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
         model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_adaboost(top5_roc, method_name="ROC-AUC", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-                       n_estimators=75, learning_rate=0.2)
+                   n_estimators=50, learning_rate=0.2)
         results['roc_adaboost'] = test_adaboost(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['roc_adaboost'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
@@ -179,7 +179,7 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
         model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_random_forest(
             top5_roc, method_name="ROC-AUC", data=train_data,
             ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-            n_estimators=15, max_depth=10
+            n_estimators=15, max_depth=1
         )
         results['roc_random_forest'] = test_random_forest(model, data=test_data,
                                                           ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
@@ -198,25 +198,25 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
         results['kw_fisher'] = test_fisher_lda(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['kw_fisher'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
-        model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_svm_linear(top5_kruskall, method_name="Kruskal-Wallis", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, C=0.03125)
+        model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_svm_linear(top5_kruskall, method_name="Kruskal-Wallis", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, C=1.0)
         results['kw_svm'] = test_svm_generic(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['kw_svm'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
-        model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_svm_custom(top5_kruskall, method_name="Kruskal-Wallis", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, C=0.03125)
+        model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_svm_custom(top5_kruskall, method_name="Kruskal-Wallis", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, C=1.0)
         results['kw_svm_custom'] = test_svm_generic(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['kw_svm_custom'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
         model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_svm_rbf_kernel(top5_kruskall, method_name="Kruskal-Wallis", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-                         C=0.5, gamma=1.0)
+                 C=8.0, gamma=0.125)
         results['kw_svm_rbf'] = test_svm_generic(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['kw_svm_rbf'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
-        model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_knn(top5_kruskall, method_name="Kruskal-Wallis", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, n_neighbors=9)
+        model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_knn(top5_kruskall, method_name="Kruskal-Wallis", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, n_neighbors=3)
         results['kw_knn'] = test_knn(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['kw_knn'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
         model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_decision_tree(top5_kruskall, method_name="Kruskal-Wallis", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-                        max_depth=2, criterion='gini')
+                max_depth=3, criterion='gini')
         results['kw_decision_tree'] = test_decision_tree(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['kw_decision_tree'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
@@ -225,7 +225,7 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
         train_results['kw_bayes'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
         model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_adaboost(top5_kruskall, method_name="Kruskal-Wallis", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-                       n_estimators=75, learning_rate=0.2)
+                   n_estimators=50, learning_rate=0.2)
         results['kw_adaboost'] = test_adaboost(model, data=test_data, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['kw_adaboost'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
         model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_adaboost_custom(top5_kruskall, method_name="Kruskal-Wallis", data=train_data, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train)
@@ -235,7 +235,7 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
         model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_random_forest(
             top5_kruskall, method_name="Kruskal-Wallis", data=train_data,
             ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-            n_estimators=50, max_depth=10
+            n_estimators=15, max_depth=1
         )
         results['kw_random_forest'] = test_random_forest(model, data=test_data,
                                                          ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
@@ -268,11 +268,11 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
         train_results['pca_svm_custom'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
         model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_svm_rbf_kernel(pca_features, method_name="PCA", data=df_pca_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-                         C=0.5, gamma=0.5)
+                 C=8.0, gamma=1.0)
         results['pca_svm_rbf'] = test_svm_generic(model, data=df_pca_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['pca_svm_rbf'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
-        model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_knn(pca_features, method_name="PCA", data=df_pca_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, n_neighbors=17)
+        model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_knn(pca_features, method_name="PCA", data=df_pca_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, n_neighbors=9)
         results['pca_knn'] = test_knn(model, data=df_pca_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['pca_knn'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
@@ -297,7 +297,7 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
         model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_random_forest(
             pca_features, method_name="PCA", data=df_pca_train,
             ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-            n_estimators=25, max_depth=2
+            n_estimators=100, max_depth=5
         )
         results['pca_random_forest'] = test_random_forest(model, data=df_pca_test,
                                                           ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
@@ -322,26 +322,26 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
         results['lda_mahalanobis'] = test_mahalanobis_distance(model, data=df_lda_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['lda_mahalanobis'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
-        model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_svm_linear(['LD1'], method_name="LDA", data=df_lda_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, C=0.03125)
+        model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_svm_linear(['LD1'], method_name="LDA", data=df_lda_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, C=0.5)
         results['lda_svm'] = test_svm_generic(model, data=df_lda_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['lda_svm'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
-        model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_svm_custom(['LD1'], method_name="LDA", data=df_lda_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, C=0.03125)
+        model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_svm_custom(['LD1'], method_name="LDA", data=df_lda_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train, C=0.5)
         results['lda_svm_custom'] = test_svm_generic(model, data=df_lda_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['lda_svm_custom'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
         model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_svm_rbf_kernel(['LD1'], method_name="LDA", data=df_lda_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-                         C=0.125, gamma=0.5)
+                 C=1.0, gamma=1.0)
         results['lda_svm_rbf'] = test_svm_generic(model, data=df_lda_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['lda_svm_rbf'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
         model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_knn(['LD1'], method_name="LDA", data=df_lda_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-                  n_neighbors=1)
+              n_neighbors=17)
         results['lda_knn'] = test_knn(model, data=df_lda_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['lda_knn'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
         model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_decision_tree(['LD1'], method_name="LDA", data=df_lda_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-                        max_depth=2, criterion='gini')
+                max_depth=1, criterion='gini')
         results['lda_decision_tree'] = test_decision_tree(model, data=df_lda_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['lda_decision_tree'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
@@ -350,7 +350,7 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
         train_results['lda_bayes'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
         model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_adaboost(['LD1'], method_name="LDA", data=df_lda_train, ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-                       n_estimators=10, learning_rate=0.05)
+                   n_estimators=25, learning_rate=0.2)
         results['lda_adaboost'] = test_adaboost(model, data=df_lda_test, ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)
         train_results['lda_adaboost'] = (tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc)
 
@@ -361,7 +361,7 @@ def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, 
         model, tr_acc, tr_sens, tr_spec, tr_prec, tr_f1, tr_auc = train_random_forest(
             ['LD1'], method_name="LDA", data=df_lda_train,
             ixHealthy=ixHealthy_train, ixCancer=ixCancer_train,
-            n_estimators=15, max_depth=1
+            n_estimators=100, max_depth=1
         )
         results['lda_random_forest'] = test_random_forest(model, data=df_lda_test,
                                                           ixHealthy=ixHealthy_test, ixCancer=ixCancer_test)

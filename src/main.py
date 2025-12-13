@@ -196,21 +196,23 @@ def one_run():
     print("\n6. HYPERPARAMETER SEARCH (Validation Step)")
     print("-" * 50)
 
-    
-    # 6a. K-FOLD cross-validated search (train-only)
     """
+    # 6a. K-FOLD cross-validated search (train-only)
+    
     best_params_kfold, metrics_summary_kfold = search_optimal_params_kfold(
-        train_data=train_data,              # pandas DataFrame with training rows only
-        all_features=all_features,          # list of original feature column names
-        top5_roc=top5_roc,                  # list of top-5 ROC columns
-        top5_kruskall=top5_kruskall,         # list of top-5 KW columns
-        k=5,                                 # number of folds
-        X_pca_all=X_pca,                   # numpy array aligned to train_data rows
-        LD1_all=lda,                       # numpy array (N x 1) aligned to train_data rows
-        progress_every=10,                  # print progress more frequently
+        train_data=train_data,
+        all_features=all_features,
+        top5_roc=top5_roc,
+        top5_kruskall=top5_kruskall,
+        k=5,
+        X_pca_all=X_pca,
+        LD1_all=lda,
+        X_pca_val=X_pca_val,
+        LD1_val=lda_val,
+        progress_every=10,
         enable_custom_svm=False,
+        val_data=val_data
     )
-
     print("\nBest hyperparameters (k-fold):")
     for key, val in best_params_kfold.items():
         print(f"  {key}: {val}")

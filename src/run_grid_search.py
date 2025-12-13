@@ -120,13 +120,28 @@ def search_optimal_params_kfold(train_data, all_features, top5_roc, top5_kruskal
                                 progress_every=50,
                                 enable_custom_svm=False,
                                 X_pca_all=None,
-                                LD1_all=None):
+                                LD1_all=None,
+                                val_data=None,
+                                X_pca_val=None,
+                                LD1_val=None):
     """
-    K-fold hyperparameter search using only training data.
-    Performs fold-wise normalization implicitly assumed already in `train_data`.
+    K-fold hyperparameter search using training (+ validation if provided).
+    If `val_data` is passed, it is concatenated with `train_data` before CV.
+    For PCA/LDA arrays, pass corresponding validation arrays (`X_pca_val`, `LD1_val`)
+    so they can be concatenated to match the combined labels length.
     Returns best params per feature set by lowest average validation error.
     Note: PCA/LDA not included here unless fold-specific arrays are provided.
     """
+    # Combine train + validation data if available
+    if val_data is not None and isinstance(val_data, pd.DataFrame):
+        try:
+            train_data = pd.concat([train_data, val_data], ignore_index=True)
+        except Exception:
+            # Fallback: if columns differ, align common columns
+            common_cols = [c for c in train_data.columns if c in val_data.columns]
+            train_data = pd.concat([
+                train_data[common_cols], val_data[common_cols]
+            ], ignore_index=True)
     feature_sets_to_test = {
         "All Features": all_features,
         "ROC-AUC Top 5": top5_roc,
@@ -134,8 +149,19 @@ def search_optimal_params_kfold(train_data, all_features, top5_roc, top5_kruskal
     }
     # Add PCA/LDA analogous to run_all_classifiers, using provided arrays
     if X_pca_all is not None and isinstance(X_pca_all, np.ndarray):
+        # If validation PCA is provided and val_data used, concatenate to align sizes
+        if val_data is not None and X_pca_val is not None and isinstance(X_pca_val, np.ndarray):
+            try:
+                X_pca_all = np.vstack([X_pca_all, X_pca_val])
+            except Exception:
+                pass
         feature_sets_to_test["PCA Features"] = [f"PC{i+1}" for i in range(X_pca_all.shape[1])]
     if LD1_all is not None and isinstance(LD1_all, np.ndarray):
+        if val_data is not None and LD1_val is not None and isinstance(LD1_val, np.ndarray):
+            try:
+                LD1_all = np.concatenate([LD1_all, LD1_val], axis=0)
+            except Exception:
+                pass
         feature_sets_to_test["LDA Features"] = ["LD1"]
 
     y_all = (train_data["Classification"].values == "Cancer").astype(int)
