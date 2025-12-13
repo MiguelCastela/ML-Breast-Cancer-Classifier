@@ -34,7 +34,6 @@ def pca_analysis(dados, variance_threshold=0.95):
 
     fig=px.scatter(x=Xp,y=np.zeros(np.shape(X)[0]),color=y,labels=dict(x="PC1",y="",color="Class"), title="PCA - Projection onto PC1")
     fig.update_traces(marker_size=5)
-    #fig.show()
     fig.write_html("plots/pca_scatter_plot.html")
 
     
@@ -55,10 +54,6 @@ def pca_analysis(dados, variance_threshold=0.95):
     fig.write_html("plots/explained_variance.html")
     
     
-
-
-    
-    
     return evr, n_components_95, pca_model, X, y
 
 def pca_kaiser(pca_model, x, y):
@@ -70,14 +65,14 @@ def pca_kaiser(pca_model, x, y):
 
     fig.update_layout(
         xaxis=dict(
-            title=dict(text="Principal Component", font=dict(size=18)),  # axis title
-            tickfont=dict(size=14)  # tick labels
+            title=dict(text="Principal Component", font=dict(size=18)),  
+            tickfont=dict(size=14)  
         ),
         yaxis=dict(
             title=dict(text="Explained Variance", font=dict(size=18)),
             tickfont=dict(size=14)
         ),
-        margin=dict(l=40, r=20, t=30, b=40),  # tighter margins
+        margin=dict(l=40, r=20, t=30, b=40),  
         autosize=True
     )
     #fig.show()
@@ -98,23 +93,8 @@ def pca_kaiser(pca_model, x, y):
 
     variance_retained = (np.sum(eigenvalues[kaiser_indices] ** 2) / np.sum(eigenvalues ** 2)) * 100
 
-    """
-    variance_retained = (np.sum(global_pca.explained_variance_[kaiser_indices]) /
-                     np.sum(global_pca.explained_variance_)) * 100
-                     """
-    
-
     print(f"Variance retained according to Kaiser (manual): {variance_retained:.2f}%")
 
-
-    
-
-    """
-    variance_retained = np.sum(evr[kaiser_indices]) * 100
-    
-
-    print(f"\nTotal variance retained (Kaiser): {variance_retained:.2f}%")
-    """
 
     #plot projected data according kaiser criterion 
     pca_kaiser = PCA(n_components=1)

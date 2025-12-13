@@ -6,7 +6,6 @@ warnings.filterwarnings(
     module="sklearn.ensemble._weight_boosting"
 )
 
-# Remove incorrect import of all_features
 import ROC_AUC as roc_auc_module
 import kruskal_wallis as kruskal_wallis_module
 from PCA import pca_analysis, pca_scree, pca_kaiser 
@@ -23,7 +22,6 @@ from collections import defaultdict, Counter
 
 
 def one_run():
-    """Main function that orchestrates all analyses"""
 
     dados, ixHealthy, ixCancer, fnames, Classes, train_data, val_data,   test_data, ixHealthy_train, ixCancer_train, ixHealthy_val, ixCancer_val, ixHealthy_test, ixCancer_test = get_random_train_test_split()
     all_features = list(fnames)
@@ -196,42 +194,6 @@ def one_run():
     print("\n6. HYPERPARAMETER SEARCH (Validation Step)")
     print("-" * 50)
 
-    """
-    # 6a. K-FOLD cross-validated search (train-only)
-    
-    best_params_kfold, metrics_summary_kfold = search_optimal_params_kfold(
-        train_data=train_data,
-        all_features=all_features,
-        top5_roc=top5_roc,
-        top5_kruskall=top5_kruskall,
-        k=5,
-        X_pca_all=X_pca,
-        LD1_all=lda,
-        X_pca_val=X_pca_val,
-        LD1_val=lda_val,
-        progress_every=10,
-        enable_custom_svm=False,
-        val_data=val_data
-    )
-    print("\nBest hyperparameters (k-fold):")
-    for key, val in best_params_kfold.items():
-        print(f"  {key}: {val}")
-    print("\nMetrics summary (train/val avg±std over folds):")
-    for feat_set, methods in metrics_summary_kfold.items():
-        print(f"[{feat_set}]")
-        for method, m in methods.items():
-            print(
-                f"  {method}: "
-                f"train F1={m['train_avg_f1']*100:.2f}%±{m['train_std_f1']*100:.2f}% | "
-                f"train Acc={m['train_avg_acc']*100:.2f}%±{m['train_std_acc']*100:.2f}% | "
-                f"val F1={m['val_avg_f1']*100:.2f}%±{m['val_std_f1']*100:.2f}% | "
-                f"val Acc={m['val_avg_acc']*100:.2f}%±{m['val_std_acc']*100:.2f}%"
-            )
-
-
-    # Return metrics to be consumed by multi-run aggregator
-    return roc, H_results, fnames, best_params_kfold, metrics_summary_kfold
-    """
     try:
 
 
@@ -299,13 +261,11 @@ def run_all_classifiers_multiple_times():
                 all_train_results[key] = []
             all_train_results[key].append(metrics)
 
-    # Compute mean and std metrics
     mean_test_results = {k: tuple(np.mean(v, axis=0)) for k, v in all_test_results.items()}
     std_test_results = {k: tuple(np.std(v, axis=0, ddof=0)) for k, v in all_test_results.items()}
     mean_train_results = {k: tuple(np.mean(v, axis=0)) for k, v in all_train_results.items()}
     std_train_results = {k: tuple(np.std(v, axis=0, ddof=0)) for k, v in all_train_results.items()}
 
-    # Print mean ± std results
     print("\n=== TEST metrics over", n_runs, "runs (mean ± std) ===")
     for clf in mean_test_results.keys():
         m = mean_test_results[clf]

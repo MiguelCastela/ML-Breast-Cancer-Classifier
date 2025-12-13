@@ -8,15 +8,12 @@ def train_euclidean_distance(feature_names, method_name="Unknown", data=None, ix
     if ixHealthy is None or ixCancer is None:
         ixHealthy = np.where(data["Classification"] == "Healthy")
         ixCancer = np.where(data["Classification"] == "Cancer")
-    """
-    Euclidean distance classifier using selected features
-    """
+    
     print(f"\n=== EUCLIDEAN DISTANCE CLASSIFIER ({method_name}) ===")
     print(f"Using features: {feature_names}")
 
     X_healthy = data[feature_names].iloc[ixHealthy[0]].values
     X_cancer = data[feature_names].iloc[ixCancer[0]].values
-    # Calculate means for each class
 
     mu_healthy = np.mean(X_healthy, axis=0)
     mu_cancer = np.mean(X_cancer, axis=0)
@@ -28,7 +25,6 @@ def train_euclidean_distance(feature_names, method_name="Unknown", data=None, ix
         "mu_cancer": mu_cancer
     }
 
-    # Print training metrics (on combined train set)
     X = np.concatenate([X_healthy, X_cancer], axis=0)
     y_train = np.concatenate([np.zeros(len(X_healthy)), np.ones(len(X_cancer))])
     dist_healthy = np.linalg.norm(X - mu_healthy, axis=1)
@@ -75,10 +71,9 @@ def test_euclidean_distance(model, data=None , ixHealthy=None, ixCancer=None):
     mu_cancer = model["mu_cancer"]
     X_healthy = data[feature_names].iloc[ixHealthy[0]].values
     X_cancer = data[feature_names].iloc[ixCancer[0]].values
-    # Combine all data
     X = np.concatenate([X_healthy, X_cancer], axis=0)
-    y_true = np.concatenate([np.zeros(len(X_healthy)), np.ones(len(X_cancer))])  # 0=Healthy, 1=Cancer
-    # Classification using euclidean distance
+    y_true = np.concatenate([np.zeros(len(X_healthy)), np.ones(len(X_cancer))])  
+
     dist_healthy = np.zeros(len(X))
     dist_cancer = np.zeros(len(X))
     y_pred = np.zeros(len(X))
@@ -86,11 +81,11 @@ def test_euclidean_distance(model, data=None , ixHealthy=None, ixCancer=None):
         dist_healthy[i] = np.linalg.norm(sample - mu_healthy)
         dist_cancer[i] = np.linalg.norm(sample - mu_cancer)
         y_pred[i] = 0 if dist_healthy[i] < dist_cancer[i] else 1
-    # Calculate metrics
-    TP = np.sum((y_true == 1) & (y_pred == 1))  # Cancer correctly classified
-    TN = np.sum((y_true == 0) & (y_pred == 0))  # Healthy correctly classified
-    FP = np.sum((y_true == 0) & (y_pred == 1))  # Healthy misclassified as Cancer
-    FN = np.sum((y_true == 1) & (y_pred == 0))  # Cancer misclassified as Healthy
+
+    TP = np.sum((y_true == 1) & (y_pred == 1))  
+    TN = np.sum((y_true == 0) & (y_pred == 0))  
+    FP = np.sum((y_true == 0) & (y_pred == 1))  
+    FN = np.sum((y_true == 1) & (y_pred == 0))  
     sensitivity = TP / (TP + FN) if (TP + FN) > 0 else 0
     specificity = TN / (TN + FP) if (TN + FP) > 0 else 0
     precision = TP / (TP + FP) if (TP + FP) > 0 else 0

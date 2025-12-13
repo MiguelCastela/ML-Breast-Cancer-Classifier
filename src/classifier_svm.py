@@ -8,20 +8,15 @@ from sklearn import svm
 
 # Helper function to convert 0/1 labels to -1/+1
 def map_labels_to_pm1(y):
-    # Converts 0 (Healthy) -> -1 and 1 (Cancer) -> 1
     return np.where(y == 1, 1, -1)
 
 # Helper function to convert -1/+1 labels back to 0/1
 def map_labels_to_01(y):
-    # Converts -1 -> 0 and 1 -> 1
     return np.where(y == 1, 1, 0)
 
 
 def train_svm_custom(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None, C=1, tol=1e-3, max_passes=10):
-    """
-    Trains a Linear SVM using the provided custom SMO implementation (svm_hard_margin logic).
-    C is set to a large value (1e10) for hard-margin, matching the default in the original code.
-    """
+    
     if ixHealthy is None or ixCancer is None:
         ixHealthy = np.where(data["Classification"] == "Healthy")
         ixCancer = np.where(data["Classification"] == "Cancer")
@@ -29,18 +24,13 @@ def train_svm_custom(feature_names, method_name="Unknown", data=None, ixHealthy=
     print(f"\n=== CUSTOM LINEAR SVM CLASSIFIER (C={C}, {method_name}) ===")
     print(f"Using features: {feature_names}")
 
-    # --- Data Extraction and Label Conversion ---
     X_train = data[feature_names].iloc[ixHealthy[0]].values # Healthy
     X_train = np.concatenate([X_train, data[feature_names].iloc[ixCancer[0]].values], axis=0)
     
-    # y_train: 0/1 labels from train indices
     y_train_01 = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))])
-    # Convert to -1/+1 for the SMO algorithm
     y_train_pm1 = map_labels_to_pm1(y_train_01) 
 
 
-    # --------------------------------------------------------------------------------------
-    # START: Code adapted directly from svm_hard_margin (with label change: y_train_pm1)
     
     X = np.asmatrix(X_train)
     y = np.asmatrix(y_train_pm1).T
@@ -50,7 +40,6 @@ def train_svm_custom(feature_names, method_name="Unknown", data=None, ixHealthy=
     # NOTE: You must ensure clipAlphasJ and selectJrandom are available in the scope 
     # (e.g., defined outside both train/test functions or copied here).
     
-    # Since they were defined *inside* the original function, we'll define them here:
     def clipAlphasJ(aj, H, L):
         if aj > H: aj = H
         if L > aj: aj = L
@@ -117,63 +106,50 @@ def train_svm_custom(feature_names, method_name="Unknown", data=None, ixHealthy=
 
         passes = passes + 1 if num_changed_alphas == 0 else 0
 
-    # Compute w
     w = np.zeros((1, n))
     y_vec = np.asarray(y).flatten()
     for i in range(m):
         w += float(alphas[i]) * y_vec[i] * np.asarray(X[i, :])
-    w = np.asmatrix(w).T  # shape (n,1)
+    w = np.asmatrix(w).T  
 
-    # Support vectors
-    #Identify samples that are support vectors
+
     ixSv = np.where(np.asarray(alphas).flatten() > 0)[0]
 
 
     Svs = np.asarray(X)[ixSv, :]
     ySvs = y_vec[ixSv]
 
-    # Compute b via média de dois SVs (se existirem de ambos os lados)
     if np.any(ySvs == 1) and np.any(ySvs == -1):
-        #Identify the positive and negative support vectors
         pos_sv = Svs[ySvs == 1][0]
         neg_sv = Svs[ySvs == -1][0]
         b_alt = -0.5 * (float(w.T @ np.asmatrix(pos_sv).T) + float(w.T @ np.asmatrix(neg_sv).T))
         b = b_alt
         
-    # END: Code adapted from svm_hard_margin
-    # --------------------------------------------------------------------------------------
 
 
-    # Define the predict function based on the calculated w and b
     def predict_scores(Xte):
-        # Xte must be a matrix or array suitable for matrix multiplication
         Xte = np.asmatrix(Xte) if isinstance(Xte, np.ndarray) else Xte
-        return (Xte * w + b).A.flatten() # Scores/Distance to hyperplane
+        return (Xte * w + b).A.flatten() 
 
     def predict_labels(Xte):
         scores = predict_scores(Xte)
-        # Prediction in {-1, 1}
         y_pred_pm1 = np.where(scores >= 0, 1, -1)
-        # Convert back to {0, 1} for compatibility with run_all_classifiers
         return map_labels_to_01(y_pred_pm1)
 
 
     print(f"SVM weights (w): {w.A.flatten()}")
     print(f"SVM bias (b): {b}")
 
-    # Store the essential parts and prediction functions
     model = {
         "feature_names": feature_names,
         "w": w,
         "b": b,
-        "predict_labels": predict_labels,  # Returns 0/1 labels
-        "predict_scores": predict_scores,  # Returns raw scores (distance to hyperplane)
+        "predict_labels": predict_labels,  
+        "predict_scores": predict_scores,  
     }
 
-    # Print training metrics (custom SVM on training set)
     y_pred_tr = model["predict_labels"](np.asarray(X_train))
     decision_scores_tr = model["predict_scores"](np.asarray(X_train))
-    # Convert original training labels back to 0/1
     y_train = np.where(y_train_pm1 == 1, 1, 0)
     TP = np.sum((y_train == 1) & (y_pred_tr == 1))
     TN = np.sum((y_train == 0) & (y_pred_tr == 0))
@@ -207,9 +183,7 @@ def train_svm_custom(feature_names, method_name="Unknown", data=None, ixHealthy=
 
 
 def train_svm_linear(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None, C=1):
-    """
-    Trains a Linear Support Vector Machine (SVM) classifier.
-    """
+    
     if ixHealthy is None or ixCancer is None:
         ixHealthy = np.where(data["Classification"] == "Healthy")
         ixCancer = np.where(data["Classification"] == "Cancer")
@@ -217,18 +191,14 @@ def train_svm_linear(feature_names, method_name="Unknown", data=None, ixHealthy=
     print(f"\n=== LINEAR SVM CLASSIFIER (C={C}, {method_name}) ===")
     print(f"Using features: {feature_names}")
 
-    # Extract training data
     X_train = data[feature_names].values
-    # Target labels must be 0/1 for consistency
     y_train = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))]) 
 
-    # Fit SVM model with linear kernel
-    # probability=True allows predict_proba for ROC-AUC, though decision_function is often preferred for SVM scores.
+    
     clf = svm.SVC(kernel="linear", C=C, random_state=42, probability=True) 
     clf.fit(X_train, y_train)
 
-    # Note: SVM stores the decision boundary as w and b similar to your custom code, 
-    # but we store the whole object for simplicity.
+    
     w = clf.coef_.flatten()
     b = clf.intercept_[0]
     
@@ -241,7 +211,6 @@ def train_svm_linear(feature_names, method_name="Unknown", data=None, ixHealthy=
         "C": C,
     }
 
-    # Print training metrics
     y_pred_tr = clf.predict(X_train)
     decision_scores_tr = clf.predict_proba(X_train)[:, 1]
     TP = np.sum((y_train == 1) & (y_pred_tr == 1))
@@ -278,9 +247,7 @@ def train_svm_linear(feature_names, method_name="Unknown", data=None, ixHealthy=
 
 
 def train_svm_rbf_kernel(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None, C=2**5.0, gamma=2**-15.0):
-    """
-    Trains an RBF Kernel Support Vector Machine (SVM) classifier using pre-determined optimal C and gamma.
-    """
+    
     if ixHealthy is None or ixCancer is None:
         ixHealthy = np.where(data["Classification"] == "Healthy")
         ixCancer = np.where(data["Classification"] == "Cancer")
@@ -288,11 +255,10 @@ def train_svm_rbf_kernel(feature_names, method_name="Unknown", data=None, ixHeal
     print(f"\n=== RBF-KERNEL SVM CLASSIFIER (C={C:.4f}, Gamma={gamma:.6f}, {method_name}) ===")
     print(f"Using features: {feature_names}")
 
-    # Extract training data
     X_train = data[feature_names].values
     y_train = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))]) # 0=Healthy, 1=Cancer
 
-    # Fit RBF SVM model
+    
     # probability=True is necessary to get predict_proba for ROC-AUC if needed, 
     # although decision_function is generally used for scores.
     clf = svm.SVC(kernel="rbf", C=C, gamma=gamma, random_state=42, probability=True) 
@@ -305,7 +271,6 @@ def train_svm_rbf_kernel(feature_names, method_name="Unknown", data=None, ixHeal
         "gamma": gamma
     }
 
-    # Print training metrics
     y_pred_tr = clf.predict(X_train)
     decision_scores_tr = clf.predict_proba(X_train)[:, 1]
     TP = np.sum((y_train == 1) & (y_pred_tr == 1))
@@ -340,17 +305,14 @@ def train_svm_rbf_kernel(feature_names, method_name="Unknown", data=None, ixHeal
 
 
 def test_svm_generic(model, data=None , ixHealthy=None, ixCancer=None):
-    """
-    Classifies test data using either the Scikit-learn SVC/LinearSVC or the custom SVM model, 
-    and computes metrics.
-    """
+    
     if ixHealthy is None or ixCancer is None:
         ixHealthy = np.where(data["Classification"] == "Healthy")
         ixCancer = np.where(data["Classification"] == "Cancer")
 
     feature_names = model["feature_names"]
 
-    # --- Test Data Preparation ---
+    
     # Need to handle both DataFrame slice and full array/matrix input for compatibility
     if "w" in model: # Custom model uses array/matrix multiplication and works best with matrix data
         X_test = data[feature_names].iloc[ixHealthy[0]].values
@@ -360,7 +322,6 @@ def test_svm_generic(model, data=None , ixHealthy=None, ixCancer=None):
         
     y_true = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))])
 
-    # --- Prediction and Decision Scores (Unified Logic) ---
     if "clf" in model:
         # Case 1: Scikit-learn model (Trained by train_svm_linear or train_svm_rbf)
         clf = model["clf"]
@@ -377,7 +338,6 @@ def test_svm_generic(model, data=None , ixHealthy=None, ixCancer=None):
         raise ValueError("Model dictionary must contain either 'clf' (sklearn) or 'predict_labels' (custom).")
 
 
-    # --- Metric Calculation ---
     TP = np.sum((y_true == 1) & (y_pred == 1))
     TN = np.sum((y_true == 0) & (y_pred == 0))
     FP = np.sum((y_true == 0) & (y_pred == 1))

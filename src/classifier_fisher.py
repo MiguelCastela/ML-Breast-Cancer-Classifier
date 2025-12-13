@@ -8,41 +8,31 @@ def train_fisher_lda(feature_names, method_name="Unknown", data=None , ixHealthy
     if ixHealthy is None or ixCancer is None:
         ixHealthy = np.where(data["Classification"] == "Healthy")
         ixCancer = np.where(data["Classification"] == "Cancer")
-    """
-    Fisher's Linear Discriminant Analysis classifier using selected features
-    """
+    
     print(f"\n=== FISHER'S LDA CLASSIFIER ({method_name}) ===")
     print(f"Using features: {feature_names}")
 
 
-    
-    # Extract data for selected features
     X_healthy = data[feature_names].iloc[ixHealthy[0]].values
     X_cancer = data[feature_names].iloc[ixCancer[0]].values
     
-    # Combine all data
     X = np.concatenate([X_healthy, X_cancer], axis=0)
-    y_true = np.concatenate([np.zeros(len(X_healthy)), np.ones(len(X_cancer))])  # 0=Healthy, 1=Cancer
+    y_true = np.concatenate([np.zeros(len(X_healthy)), np.ones(len(X_cancer))])  
     
-    # Calculate means for each class
     mu_healthy = np.mean(X_healthy, axis=0).reshape(-1, 1)
     mu_cancer = np.mean(X_cancer, axis=0).reshape(-1, 1)
     
-    # Calculate within-class scatter matrices
     S_healthy = np.zeros((len(feature_names), len(feature_names)))
     S_cancer = np.zeros((len(feature_names), len(feature_names)))
     
-    # Within-class scatter for healthy samples
     for sample in X_healthy:
         diff = (sample - mu_healthy.flatten()).reshape(-1, 1)
         S_healthy += diff @ diff.T
     
-    # Within-class scatter for cancer samples
     for sample in X_cancer:
         diff = (sample - mu_cancer.flatten()).reshape(-1, 1)
         S_cancer += diff @ diff.T
     
-    # Total within-class scatter matrix
     S_w = S_healthy + S_cancer
     
 

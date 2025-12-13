@@ -4,18 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_curve, auc
 
 def train_random_forest(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None, n_estimators=100, max_depth=None):
-    """
-    Trains a Random Forest classifier.
     
-    Parameters:
-    - feature_names (list): List of feature columns to use.
-    - method_name (str): Descriptive name for the run.
-    - data (pd.DataFrame): Training data.
-    - ixHealthy (tuple): Indices for the 'Healthy' class.
-    - ixCancer (tuple): Indices for the 'Cancer' class.
-    - n_estimators (int): The number of trees in the forest.
-    - max_depth (int): The maximum depth of the tree (None for unlimited).
-    """
     if ixHealthy is None or ixCancer is None: 
         ixHealthy = np.where(data["Classification"] == "Healthy")
         ixCancer = np.where(data["Classification"] == "Cancer")
@@ -23,20 +12,17 @@ def train_random_forest(feature_names, method_name="Unknown", data=None, ixHealt
     print(f"\n=== RANDOM FOREST CLASSIFIER (n_estimators={n_estimators}, Max Depth={max_depth}, {method_name}) ===")
     print(f"Using features: {feature_names}")
 
-    # Extract training data
     X_train = data[feature_names].values
-    y_train = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))]) # 0=Healthy, 1=Cancer
+    y_train = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))]) 
 
-    # Fit Random Forest model
     clf = RandomForestClassifier(
         n_estimators=n_estimators,
         max_depth=max_depth,
         random_state=42,
-        class_weight='balanced' # Often useful for classification tasks
+        class_weight='balanced' 
     )
     clf.fit(X_train, y_train)
 
-    # Print training metrics
     y_pred_tr = clf.predict(X_train)
     decision_scores_tr = clf.predict_proba(X_train)[:, 1]
     TP = np.sum((y_train == 1) & (y_pred_tr == 1))
@@ -76,9 +62,7 @@ def train_random_forest(feature_names, method_name="Unknown", data=None, ixHealt
     )
 
 def test_random_forest(model, data=None , ixHealthy=None, ixCancer=None):
-    """
-    Classifies test data using the trained Random Forest model and computes metrics.
-    """
+    
     if ixHealthy is None or ixCancer is None:
         ixHealthy = np.where(data["Classification"] == "Healthy")
         ixCancer = np.where(data["Classification"] == "Cancer")
@@ -86,17 +70,13 @@ def test_random_forest(model, data=None , ixHealthy=None, ixCancer=None):
     feature_names = model["feature_names"]
     clf = model["clf"]
 
-    # --- Test Data Preparation ---
     X_test = data[feature_names].values
-    y_true = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))])  # 0=Healthy, 1=Cancer
+    y_true = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))])  
 
-    # --- Prediction and Decision Scores ---
     y_pred = clf.predict(X_test)
 
-    # Decision scores (probability of class 1 / Cancer) for ROC-AUC
     decision_scores = clf.predict_proba(X_test)[:, 1] 
 
-    # --- Metric Calculation (Consistent with other test functions) ---
     TP = np.sum((y_true == 1) & (y_pred == 1))
     TN = np.sum((y_true == 0) & (y_pred == 0))
     FP = np.sum((y_true == 0) & (y_pred == 1))

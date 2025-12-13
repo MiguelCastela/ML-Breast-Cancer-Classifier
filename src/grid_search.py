@@ -14,44 +14,22 @@ from classifier_decision_tree import test_decision_tree
 
 
 def grid_search_svm_linear(X_train, y_train, X_val, y_val, CsP2):
-    """
-    Performs a grid search for the optimal C parameter of a linear SVM 
-    on a SINGLE train/validation split and stores results in a provided error matrix.
-    
-    This function is intended to be called repeatedly (e.g., inside a K-Fold loop).
-
-    Parameters:
-    - X_train (np.array): Training feature matrix.
-    - y_train (np.array): Training target vector.
-    - X_val (np.array): Validation feature matrix.
-    - y_val (np.array): Validation target vector.
-    - CsP2 (np.array): Array of powers of 2 for C (C = 2**cP2).
-    
-    Returns:
-    - avgError (np.array): Error rates (1-Accuracy) per C.
-    - stdError (np.array): Zeros (single split).
-    - optC (float): Optimal C value minimizing validation error.
-    """
     
     # Single-run error vector (1 - F1) * 100
     errVec = np.zeros(CsP2.shape[0])
     ki = 0
     print(f"\nProcessing Linear SVM grid on single split...")
     
-    for cP2 in CsP2: # Evaluate different Cs
+    for cP2 in CsP2: 
         C = 2**cP2
         
-        # fit SVM
         clf = svm.SVC(kernel="linear", C=C, random_state=42)
         clf.fit(X_train, y_train)
         
-        # Predict on validation data (equivalent to X_test in the original code)
         y_pred = clf.predict(X_val)
         
-        # Evaluate F1 score on validation data
         f1 = f1_score(y_val, y_pred)
         
-        # Store error (1 - F1) * 100
         errVec[ki] = (1 - f1) * 100
         
         print(f"  C = {C:<10.4f} (2^{cP2}): Validation F1 = {f1 * 100:.2f}% | Error = {errVec[ki]:.2f}%")
@@ -68,26 +46,8 @@ def grid_search_svm_linear(X_train, y_train, X_val, y_val, CsP2):
 
 
 def grid_search_svm_rbf(X_train, y_train, X_val, y_val, CsP2, GammasP2):
-    """
-    Performs a grid search for the optimal C and Gamma parameters of an RBF Kernel SVM 
-    on a SINGLE train/validation split.
-
-    Parameters:
-    - X_train (np.array): Training feature matrix.
-    - y_train (np.array): Training target vector.
-    - X_val (np.array): Validation feature matrix.
-    - y_val (np.array): Validation target vector.
-    - CsP2 (np.array): Array of powers of 2 for C (C = 2**cP2).
-    - GammasP2 (np.array): Array of powers of 2 for Gamma (Gamma = 2**GammasP2).
     
-    Returns:
-    - avgError (np.array): Error matrix (C x Gamma) for the single split.
-    - stdError (np.array): Zeros array (single split).
-    - optC (float): Optimal C value minimizing validation error.
-    - optGamma (float): Optimal Gamma value minimizing validation error.
-    """
     
-    # Error matrix dimensions: C values x Gamma values (1 - F1) * 100
     errMat = np.zeros((CsP2.shape[0], GammasP2.shape[0]))
     
     best_error = np.inf
@@ -96,28 +56,23 @@ def grid_search_svm_rbf(X_train, y_train, X_val, y_val, CsP2, GammasP2):
     print(f"\n=== Starting RBF-SVM Grid Search ({CsP2.shape[0]} C values x {GammasP2.shape[0]} Gamma values) ===")
     
     ci = 0
-    for cP2 in CsP2: # Evaluate different Cs
+    for cP2 in CsP2: 
         C = 2**cP2
         
         gi = 0
-        for gP2 in GammasP2: # Evaluate different Gammas
+        for gP2 in GammasP2: 
             gamma = 2**gP2
             
-            # 1. Fit SVM model with RBF kernel
             clf = svm.SVC(kernel="rbf", C=C, gamma=gamma, random_state=42)
             clf.fit(X_train, y_train)
             
-            # 2. Predict on validation data
             y_pred = clf.predict(X_val)
             
-            # 3. Evaluate error via F1
             f1 = f1_score(y_val, y_pred)
             error_rate = (1 - f1) * 100
             
-            # Store error
             errMat[ci, gi] = error_rate
             
-            # 4. Update Optimal Parameters
             if error_rate < best_error:
                 best_error = error_rate
                 optC = C
@@ -128,7 +83,6 @@ def grid_search_svm_rbf(X_train, y_train, X_val, y_val, CsP2, GammasP2):
             gi += 1
         ci += 1
 
-    # Single split: avgError is errMat; stdError zeros
     avgError = errMat
     stdError = np.zeros_like(avgError)
     
@@ -143,17 +97,7 @@ def grid_search_svm_custom(X_train, y_train, X_val, y_val, CsP2):
 
     def train_and_predict_custom_svm(X_train, y_train_01, C=1, tol=1e-3, max_passes=10):
 
-        """
-        Core SMO training logic adapted from train_svm_custom to be a standalone function.
-        
-        Parameters:
-        - X_train (np.ndarray): Training features.
-        - y_train_01 (np.ndarray): Training labels (0 or 1).
-        - C (float): Regularization parameter.
-        
-        Returns:
-        - predict_labels (function): Prediction function for a test array Xte.
-        """
+       
             # Helper functions from classifier_svm.py
         def map_labels_to_pm1(y):
             # Converts 0 (Healthy) -> -1 and 1 (Cancer) -> 1
@@ -233,12 +177,11 @@ def grid_search_svm_custom(X_train, y_train, X_val, y_val, CsP2):
 
             passes = passes + 1 if num_changed_alphas == 0 else 0
 
-        # Compute w
         w = np.zeros((1, n))
         y_vec = np.asarray(y).flatten()
         for i in range(m):
             w += float(alphas[i]) * y_vec[i] * np.asarray(X[i, :])
-        w = np.asmatrix(w).T  # shape (n,1)
+        w = np.asmatrix(w).T  
 
         # Re-compute b via average of two SVs (optional, for stability, matching original)
         ixSv = np.where(np.asarray(alphas).flatten() > 0)[0]
@@ -253,8 +196,7 @@ def grid_search_svm_custom(X_train, y_train, X_val, y_val, CsP2):
         # Define the predict function based on the calculated w and b
         def predict_labels(Xte):
             Xte = np.asmatrix(Xte) if isinstance(Xte, np.ndarray) else Xte
-            scores = (Xte * w + b).A.flatten() # Scores/Distance to hyperplane
-            # Prediction in {-1, 1}
+            scores = (Xte * w + b).A.flatten() 
             y_pred_pm1 = np.where(scores >= 0, 1, -1)
             # Convert back to {0, 1} for compatibility with grid search
             return map_labels_to_01(y_pred_pm1)
@@ -270,24 +212,20 @@ def grid_search_svm_custom(X_train, y_train, X_val, y_val, CsP2):
     # X_val is treated as X_test/validation for this run
     X_test_final, y_test_final = X_val, y_val
 
-    # The 'runs' loop is REMOVED as the split is provided externally.
-    # We proceed directly to iterate over C values.
     
-    r = 0 # Single run index
+    r = 0 
     ki = 0
     
     print(f"\n--- Running Custom Grid Search on Single Split ---")
 
-    for cP2 in CsP2: # Evaluate different Cs
+    for cP2 in CsP2: 
         C_val = 2**cP2
         
 
         predict_labels = train_and_predict_custom_svm(X_train, y_train, C=C_val)
         
-        # Predict labels on the validation set (X_val replaces X_test)
         y_pred = predict_labels(X_val)
         
-        # Evaluate error via F1 on validation
         f1 = f1_score(y_val, y_pred)
         errMat[r, ki] = (1 - f1) * 100
         
@@ -295,34 +233,16 @@ def grid_search_svm_custom(X_train, y_train, X_val, y_val, CsP2):
 
         ki = ki + 1
             
-    # at the end compute average error and error standard deviation
-    # For a single run, the average error is just the error, and std dev is 0.
-    avgError = errMat[0, :] # Use the single row of errors
+    
+    avgError = errMat[0, :] 
     stdError = np.zeros_like(avgError)
-    # Map to actual C list for selection
     C_list = 2**CsP2
     optC = C_list[np.argmin(avgError)]
     
     return avgError, stdError, optC
 
 def grid_search_knn(X_train, y_train, X_val, y_val, ks):
-    """
-    Performs a grid search for the optimal K parameter of a KNN classifier 
-    on a SINGLE train/validation split, including standardization based on the
-    training set statistics.
-
-    Parameters:
-    - X_train (np.array): Training feature matrix.
-    - y_train (np.array): Training target vector.
-    - X_val (np.array): Validation feature matrix (replaces X_test).
-    - y_val (np.array): Validation target vector (replaces y_test).
-    - ks (np.array): Array of k values (number of neighbors) to evaluate.
-
-    Returns:
-    - avgError (np.array): Error rates (1-Accuracy) for each k value.
-    - stdError (np.array): Array of zeros (std dev is not applicable for a single run).
-    - optK (int): The k value with the minimum error on the validation set.
-    """
+    
     # errMat is now 1 row (single run) x number of k values
     errMat = np.zeros((1, ks.shape[0]))
     
@@ -331,47 +251,39 @@ def grid_search_knn(X_train, y_train, X_val, y_val, ks):
     X_train_final, y_train_final = X_train, y_train
     X_test_final, y_test_final = X_val, y_val
 
-    # The 'runs' loop is REMOVED as the split is provided externally.
     
     # --- Standardization (Still essential, performed once per call) ---
     # Obtain training standardization factors
     muTr = np.mean(X_train, axis=0)
     stdTr = np.std(X_train, axis=0)
     
-    # Handle features with zero standard deviation (constant features) by using 1.0 for std.
     stdTr_safe = np.where(stdTr == 0, 1.0, stdTr) 
 
-    # Standardize training and validation data
     X_train_std = (X_train - muTr) / stdTr_safe
-    X_val_std = (X_val - muTr) / stdTr_safe # X_val replaces X_test
+    X_val_std = (X_val - muTr) / stdTr_safe 
     
-    # We use a single run index r=0
     r = 0
     ki = 0
     
     print(f"\n--- Running KNN Grid Search on Single Split ---")
 
-    for k in ks: # Evaluate different ks
-        # fit knn
+    for k in ks: 
+        
         knn = KNeighborsClassifier(n_neighbors=k)
         knn.fit(X_train_std, y_train)
         
-        # Predict on validation data (X_val_std replaces X_test)
         yp = knn.predict(X_val_std)
         
-        # Evaluate F1 on validation
         f1 = f1_score(y_val, yp)
         
-        # Store error (1 - F1) * 100
         errMat[r, ki] = (1 - f1) * 100
         
         print(f"  K = {k:<2}: Validation F1 = {f1 * 100:.2f}% | Error = {errMat[r, ki]:.2f}%")
         
         ki = ki + 1
             
-    # at the end compute average error and error standard deviation
-    # For a single run, the average error is just the error, and std dev is 0.
-    avgError = errMat[0, :] # Use the single row of errors
+    
+    avgError = errMat[0, :] 
     stdError = np.zeros_like(avgError)
     optK = ks[np.where(avgError == np.min(avgError))[0]][0]
     
@@ -379,26 +291,16 @@ def grid_search_knn(X_train, y_train, X_val, y_val, ks):
 
 def grid_search_dt(data_train, data_val, feature_names, depth_list, criterion_list):
     
-    # NOTE: The inner helper function train_decision_tree must be available in the scope.
-    # We assume 'train_decision_tree' and 'test_decision_tree' are accessible,
-    # as well as DecisionTreeClassifier, np, and pd.
     
-    
-    # Inner helper function (copied for completeness but assumed to be globally available)
-    # The inner helper function 'train_decision_tree' must be modified to use the provided training data.
     def train_decision_tree(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None, max_depth=5, criterion='gini'):
-        """
-        Trains a Decision Tree classifier, updated to accept criterion.
-        """
+       
         if ixHealthy is None or ixCancer is None:
             ixHealthy = np.where(data["Classification"] == "Healthy")
             ixCancer = np.where(data["Classification"] == "Cancer")
 
-        # Extract training data
         X_train = data[feature_names].values
-        y_train = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))]) # 0=Healthy, 1=Cancer
+        y_train = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))]) 
 
-        # Fit Decision Tree model
         clf = DecisionTreeClassifier(max_depth=max_depth, criterion=criterion, random_state=42)
         clf.fit(X_train, y_train)
 
@@ -411,13 +313,8 @@ def grid_search_dt(data_train, data_val, feature_names, depth_list, criterion_li
 
         return model
 
-    """
-    Performs a simple grid search over max_depth and criterion using 
-    separate training and validation data.
-    """
     best_f1 = -1
     best_params = {}
-    # Collect numeric errors for consistency (use 1-F1 as error)
     errMat = np.zeros((len(depth_list), len(criterion_list)))
     
     results = []
@@ -437,24 +334,22 @@ def grid_search_dt(data_train, data_val, feature_names, depth_list, criterion_li
         for criterion in criterion_list:
             
             # --- 1. Training ---
-            # Use data_train for fitting
             model = train_decision_tree(
                 feature_names=feature_names,
                 method_name="GridSearch",
-                data=data_train,           # CHANGED: Use training data
-                ixHealthy=ixHealthy_train, # CHANGED: Use training indices
-                ixCancer=ixCancer_train,   # CHANGED: Use training indices
+                data=data_train,           
+                ixHealthy=ixHealthy_train, 
+                ixCancer=ixCancer_train,   
                 max_depth=depth,
                 criterion=criterion
             )
 
             # --- 2. Testing & Evaluation ---
-            # Use data_val for evaluation
             accuracy, sensitivity, specificity, precision, f1, roc_auc = test_decision_tree(
                 model=model,
-                data=data_val,             # CHANGED: Use validation data
-                ixHealthy=ixHealthy_val,   # CHANGED: Use validation indices
-                ixCancer=ixCancer_val      # CHANGED: Use validation indices
+                data=data_val,             
+                ixHealthy=ixHealthy_val,   
+                ixCancer=ixCancer_val      
             )
 
             # --- 3. Store Results ---
@@ -467,7 +362,6 @@ def grid_search_dt(data_train, data_val, feature_names, depth_list, criterion_li
             }
             results.append(current_result)
             
-            # Store error as (1 - f1) * 100 for consistency
             di = depth_list.index(depth)
             ci = criterion_list.index(criterion)
             errMat[di, ci] = (1 - f1) * 100
@@ -482,7 +376,6 @@ def grid_search_dt(data_train, data_val, feature_names, depth_list, criterion_li
     print("--- Grid Search Complete ---")
     print(f"Optimal Parameters (based on F1-Score on Validation Data): {best_params}")
     
-    # Consistent outputs: error matrix, zeros std, and explicit best params
     avgError = errMat
     stdError = np.zeros_like(avgError)
     optDepth = best_params['max_depth']
@@ -491,25 +384,7 @@ def grid_search_dt(data_train, data_val, feature_names, depth_list, criterion_li
     return avgError, stdError, optDepth, optCriterion, pd.DataFrame(results)
 
 def grid_search_adaboost(X_train, y_train, X_val, y_val, n_estimators_list, learning_rate_list):
-    """
-    Performs a grid search for the optimal n_estimators and learning_rate 
-    of an AdaBoost classifier on a SINGLE train/validation split.
-
-    Parameters:
-    - X_train (np.array): Training feature matrix.
-    - y_train (np.array): Training target vector.
-    - X_val (np.array): Validation feature matrix (replaces X_test).
-    - y_val (np.array): Validation target vector (replaces y_test).
-    - n_estimators_list (list/array): Array of n_estimators values.
-    - learning_rate_list (list/array): Array of learning_rate values.
-
-    Returns:
-    - avgError (np.array): Error rates (1-Accuracy) for each parameter combination (2D array).
-    - stdError (np.array): Array of zeros (std dev is not applicable for a single run).
-    - optN (int): The optimal n_estimators value.
-    - optLR (float): The optimal learning_rate value.
-    """
-
+    
     n_est_arr = np.array(n_estimators_list)
     lr_arr = np.array(learning_rate_list)
     
@@ -522,17 +397,14 @@ def grid_search_adaboost(X_train, y_train, X_val, y_val, n_estimators_list, lear
     # X_val replaces X_test for this run
     X_test_final, y_test_final = X_val, y_val 
     
-    # The 'r' loop (for runs) is REMOVED as the split is provided externally.
-    
-    # We proceed directly to iterate over parameters.
     
     ni = 0
     best_error = np.inf
     best_f1, best_acc = 0.0, 0.0
     best_n, best_lr = None, None
-    for n_est in n_est_arr: # Evaluate different n_estimators
+    for n_est in n_est_arr: 
         li = 0
-        for lr in lr_arr: # Evaluate different learning_rates
+        for lr in lr_arr: 
             
             # 1. Define base estimator (Decision Stump)
             base_estimator = DecisionTreeClassifier(max_depth=1)
@@ -548,7 +420,7 @@ def grid_search_adaboost(X_train, y_train, X_val, y_val, n_estimators_list, lear
             clf.fit(X_train, y_train)
             
             # 3. Predict and Evaluate error (using X_val, y_val)
-            yp = clf.predict(X_val) # Predict on X_val
+            yp = clf.predict(X_val) 
             # F1-based error and track accuracy
             f1 = f1_score(y_val, yp)
             acc = accuracy_score(y_val, yp)
@@ -564,10 +436,9 @@ def grid_search_adaboost(X_train, y_train, X_val, y_val, n_estimators_list, lear
             li += 1
         ni += 1
             
-    # Compute average error and error standard deviation
-    # For a single run, avgError is the error matrix, and stdError is an array of zeros.
-    avgError = errMat # CHANGED: Removed averaging across axis=2
-    stdError = np.zeros_like(avgError) # CHANGED: Set std dev to zero
+   
+    avgError = errMat 
+    stdError = np.zeros_like(avgError) 
     
     # Find optimal parameters
     min_error_idx = np.argmin(avgError)
@@ -588,27 +459,10 @@ def grid_search_adaboost(X_train, y_train, X_val, y_val, n_estimators_list, lear
 import numpy as np
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
-# Assuming all custom helper functions (map_labels_to_pm1, trainAdaboost, etc.) 
-# are defined and available in the scope where this function is executed.
+
 
 def grid_search_adaboost_custom(data_train_df, data_val_df, feature_names, n_estimators_list, learning_rate_list):
-    """
-    Performs grid search for optimal n_estimators (n_mod) and learning_rate 
-    by embedding the exact custom AdaBoost training and testing logic, 
-    using provided training and validation DataFrames.
-
-    Args:
-        data_train_df (pd.DataFrame): DataFrame for training (features + 'Classification').
-        data_val_df (pd.DataFrame): DataFrame for validation (features + 'Classification').
-        feature_names (list): List of column names used as features.
-        n_estimators_list (list): List of n_mod values to test.
-        learning_rate_list (list): List of learning_rate values to test.
-        
-    Returns:
-        tuple: (avgError, stdError, optN, optLR)
-    """
-
-
+    
     def map_labels_to_pm1(y_01):
         return np.where(y_01 == 1, 1, -1)
     
@@ -667,7 +521,7 @@ def grid_search_adaboost_custom(data_train_df, data_val_df, feature_names, n_est
     errMat = np.zeros((n_est_arr.shape[0], lr_arr.shape[0])) # 2D
 
     # The internal 'runs' loop is REMOVED. The function now processes one run.
-    r = 0 # Single run index
+    r = 0 
 
     # --- Data Preparation (Replaces internal split logic) ---
     
@@ -676,24 +530,23 @@ def grid_search_adaboost_custom(data_train_df, data_val_df, feature_names, n_est
     y_train_01 = np.where(data_train_df["Classification"] == "Cancer", 1, 0)
     y_train_pm1 = map_labels_to_pm1(y_train_01) 
 
-    # Prepare validation data (replaces test data)
     X_val = data_val_df[feature_names].values
-    y_val_true_01 = np.where(data_val_df["Classification"] == "Cancer", 1, 0) # True labels in 0/1
+    y_val_true_01 = np.where(data_val_df["Classification"] == "Cancer", 1, 0) 
 
 
     ni = 0
     best_error = np.inf
     best_f1, best_acc = 0.0, 0.0
     best_n, best_lr = None, None
-    for n_est in n_est_arr: # Evaluate different n_estimators (n_mod)
+    for n_est in n_est_arr: 
         li = 0
-        for lr in lr_arr: # Evaluate different learning_rates
+        for lr in lr_arr: 
             
             # 1. Train the custom AdaBoost model
             trained_models = trainAdaboost(X_train, y_train_pm1, n_est, lr)
             
             # 2. Test the custom AdaBoost model (on X_val)
-            y_pred_pm1, decision_scores = testAdaboost(X_val, trained_models) # CHANGED: Use X_val
+            y_pred_pm1, decision_scores = testAdaboost(X_val, trained_models) 
             
             # Final prediction must be converted back to 0/1 for metric calculation
             y_pred_01 = map_labels_to_01(y_pred_pm1)
@@ -715,12 +568,9 @@ def grid_search_adaboost_custom(data_train_df, data_val_df, feature_names, n_est
             li += 1
         ni += 1
             
-    # --- Compute Results ---
-            
-    # Compute average error and error standard deviation
-    # avgError is just the error matrix; stdError is zero for a single run
-    avgError = errMat # CHANGED: Removed averaging across axis=2
-    stdError = np.zeros_like(avgError) # CHANGED: Set std dev to zero
+   
+    avgError = errMat 
+    stdError = np.zeros_like(avgError) 
     
     # Find optimal parameters
     min_error_idx = np.argmin(avgError)
@@ -736,47 +586,28 @@ def grid_search_adaboost_custom(data_train_df, data_val_df, feature_names, n_est
     print(f"Best F1: {best_f1*100:.2f}% | Best Acc: {best_acc*100:.2f}% | Min 1-F1 Err: {best_error:.2f}%")
     return avgError, stdError, optN, optLR, {"best_f1": best_f1, "best_acc": best_acc}
 
+#oi olha é necessário isto aqui?? estes import outra vez??
 
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score 
-# NOTE: The above imports are required for this function to be fully standalone.
 
 def grid_search_random_forest(data_train, data_val, feature_names, n_estimators_list, max_depth_list):
-    """
-    Performs a grid search for the optimal n_estimators and max_depth of a Random Forest 
-    classifier on a SINGLE train/validation split.
-
-    Parameters:
-    - data_train (pd.DataFrame): Training data.
-    - data_val (pd.DataFrame): Validation data (replaces test data).
-    - feature_names (list): List of feature columns to use.
-    - n_estimators_list (list): Array of n_estimators values.
-    - max_depth_list (list): Array of max_depth values.
-
-    Returns:
-    - avgError (np.array): Error rates (1-Accuracy) for each parameter combination (2D array).
-    - stdError (np.array): Array of zeros (std dev is not applicable for a single run).
-    - optN (int): The optimal n_estimators value.
-    - optD (int): The optimal max_depth value.
-    """
-
+    
     n_est_arr = np.array(n_estimators_list)
     depth_arr = np.array(max_depth_list)
     
     # Error matrix dimensions: n_estimators x max_depth
     errMat = np.zeros((n_est_arr.shape[0], depth_arr.shape[0])) 
     
-    # --- Data Preparation ---
-    # Extract features and 0/1 labels from DataFrames
+   
     X_train = data_train[feature_names].values
     y_train = np.where(data_train["Classification"] == "Cancer", 1, 0)
     
     X_val = data_val[feature_names].values
     y_val = np.where(data_val["Classification"] == "Cancer", 1, 0)
 
-    # The 'runs' loop is REMOVED. This is a single run (r=0).
     
     ni = 0
     best_error = np.inf
@@ -785,9 +616,9 @@ def grid_search_random_forest(data_train, data_val, feature_names, n_estimators_
 
     print("\n--- Starting Random Forest Grid Search (Validation Run) ---")
 
-    for n_est in n_est_arr: # Evaluate different n_estimators
+    for n_est in n_est_arr: 
         di = 0
-        for depth in depth_arr: # Evaluate different max_depths
+        for depth in depth_arr: 
             
             # 1. Fit Random Forest model (using X_train, y_train)
             clf = RandomForestClassifier(
@@ -822,8 +653,7 @@ def grid_search_random_forest(data_train, data_val, feature_names, n_estimators_
             di += 1
         ni += 1
             
-    # Compute average error and error standard deviation
-    # For a single run, avgError is the error matrix, and stdError is an array of zeros.
+    
     avgError = errMat 
     stdError = np.zeros_like(avgError)
     

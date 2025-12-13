@@ -41,7 +41,7 @@ def get_random_train_test_split():
     X_train, X_temp, y_train, y_temp = train_test_split(
         X, y,
         test_size=0.30,       # 30% left for test+validation
-        stratify=y,           # maintain class proportions
+        stratify=y,           
         random_state=random_seed
     )
 
@@ -49,19 +49,12 @@ def get_random_train_test_split():
     mu = X_train.mean(axis=0)
     st = X_train.std(axis=0)
 
-    # Normalize training data
     X_train = (X_train - mu) / st
-
-
-
-    #scaler = StandardScaler()
-    #X_train = pd.DataFrame(scaler.fit_transform(X_train), columns=fnames, index=X_train.index)
-
 
     X_val, X_test, y_val, y_test = train_test_split(
         X_temp, y_temp,
         test_size=0.5,        # half of 30% for validation and half for testing
-        stratify=y_temp,      # maintain class proportions again
+        stratify=y_temp,     
         random_state=random_seed
     )
 
@@ -69,9 +62,6 @@ def get_random_train_test_split():
     X_val = (X_val - mu) / st
     X_test = (X_test - mu) / st
 
-
-    #X_val   = pd.DataFrame(scaler.transform(X_val), columns=fnames, index=X_val.index)   
-    #X_test = pd.DataFrame(scaler.transform(X_test), columns=fnames, index=X_test.index)
 
     # Merge X_train and y_train back into a single DataFrame
     train_data = X_train.copy()

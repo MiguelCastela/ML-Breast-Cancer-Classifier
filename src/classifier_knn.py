@@ -8,11 +8,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.inspection import DecisionBoundaryDisplay
 
 def train_knn(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None, n_neighbors=5):
-    """
-    Trains a K-Nearest Neighbors classifier (non-parametric model).
-    It fits the model and stores the feature names and the trained classifier object.
-    (Note: Uses a fixed k=5 for consistency with the train/test framework.)
-    """
+    
     if ixHealthy is None or ixCancer is None:
         ixHealthy = np.where(data["Classification"] == "Healthy")
         ixCancer = np.where(data["Classification"] == "Cancer")
@@ -20,15 +16,12 @@ def train_knn(feature_names, method_name="Unknown", data=None, ixHealthy=None, i
     print(f"\n=== KNN CLASSIFIER (K={n_neighbors}, {method_name}) ===")
     print(f"Using features: {feature_names}")
 
-    # Extract training data
     X_train = data[feature_names].values
-    y_train = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))]) # 0=Healthy, 1=Cancer
+    y_train = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))]) 
 
-    # Fit KNN model
     clf = KNeighborsClassifier(n_neighbors=n_neighbors)
     clf.fit(X_train, y_train)
 
-    # Print training metrics
     y_pred_tr = clf.predict(X_train)
     decision_scores_tr = clf.predict_proba(X_train)[:, 1]
     TP = np.sum((y_train == 1) & (y_pred_tr == 1))
@@ -66,9 +59,7 @@ def train_knn(feature_names, method_name="Unknown", data=None, ixHealthy=None, i
     )
 
 def test_knn(model, data=None , ixHealthy=None, ixCancer=None):
-    """
-    Classifies test data using the trained KNN model and computes metrics.
-    """
+    
     if ixHealthy is None or ixCancer is None:
         ixHealthy = np.where(data["Classification"] == "Healthy")
         ixCancer = np.where(data["Classification"] == "Cancer")
@@ -77,18 +68,15 @@ def test_knn(model, data=None , ixHealthy=None, ixCancer=None):
     clf = model["clf"]
     n_neighbors = model["n_neighbors"]
 
-    # --- Test Data Preparation ---
     X_test = data[feature_names].values
-    y_true = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))])  # 0=Healthy, 1=Cancer
+    y_true = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))])  
 
-    # --- Prediction and Decision Scores ---
     y_pred = clf.predict(X_test)
 
     # Decision scores (probability of class 1 / Cancer) for ROC-AUC
     # We use predict_proba for ROC-AUC as the distance isn't easily interpretable as a score.
     decision_scores = clf.predict_proba(X_test)[:, 1] 
 
-    # --- Metric Calculation (Consistent with other test functions) ---
     TP = np.sum((y_true == 1) & (y_pred == 1))
     TN = np.sum((y_true == 0) & (y_pred == 0))
     FP = np.sum((y_true == 0) & (y_pred == 1))

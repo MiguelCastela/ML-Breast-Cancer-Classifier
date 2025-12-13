@@ -21,36 +21,28 @@ from grid_search import (
 from sklearn.metrics import accuracy_score, f1_score  
 from sklearn.model_selection import StratifiedKFold
 
-#KNN (trimmed)
 KNN_K_LIST = [1, 3, 5, 7, 9, 11, 13, 15, 17]
 
-# C list for SVM (both Linear and RBF) (trimmed)
 SVM_C_LIST_LINEAR = [0.03125, 0.125, 0.5, 1.0, 2.0, 8.0, 32.0]
 SVM_C_LIST_RBF = [0.03125, 0.125, 0.5, 1.0, 2.0, 8.0, 32.0]
 
-# Gamma list: RBF SVM (trimmed, centered around reasonable ranges)
 SVM_GAMMA_LIST = [0.0625, 0.125, 0.25, 0.5, 1.0]
 
-# Decision Tree (trimmed)
 DT_DEPTH_LIST = [1, 2, 3, 4, 5, 7, 10, 15]
 DT_CRITERION_LIST = ['gini', 'entropy']
 
-# AdaBoost (trimmed)
 AB_N_EST_LIST = [10, 25, 50, 75]
 AB_LR_LIST = [0.05, 0.1, 0.2]
 
-# Random Forest (trimmed)
 RF_N_EST_LIST = [15, 25, 50, 100]
 RF_MAX_DEPTH_LIST = [1, 2, 3, 4, 5, 7, 10, 15]
 
 def get_y_arrays_from_ixs(ixs):
-    """Converts (ixHealthy, ixCancer) tuple to a 0/1 label array."""
     ixHealthy, ixCancer = ixs
     y = np.concatenate([np.zeros(len(ixHealthy[0])), np.ones(len(ixCancer[0]))])
     return y
 
 def search_knn_wrapper(X_train, X_val, y_train_ixs, y_val_ixs, k_list):
-    """Wrapper for grid_search_knn_validated."""
     y_train = get_y_arrays_from_ixs(y_train_ixs)
     y_val = get_y_arrays_from_ixs(y_val_ixs)
     
@@ -66,7 +58,6 @@ def search_knn_wrapper(X_train, X_val, y_train_ixs, y_val_ixs, k_list):
     return optK
 
 def search_svm_linear_wrapper(X_train, X_val, y_train_ixs, y_val_ixs, C_list):
-    """Wrapper for Linear SVM C optimization using grid_search_svm_linear."""
     y_train = get_y_arrays_from_ixs(y_train_ixs)
     y_val = get_y_arrays_from_ixs(y_val_ixs)
     CsP2 = np.log2(C_list)
@@ -78,7 +69,6 @@ def search_svm_linear_wrapper(X_train, X_val, y_train_ixs, y_val_ixs, C_list):
     return optC
 
 def search_svm_rbf_wrapper(X_train, X_val, y_train_ixs, y_val_ixs, C_list, gamma_list):
-    """Use grid_search_svm_rbf for RBF SVM C and Gamma optimization."""
     y_train = get_y_arrays_from_ixs(y_train_ixs)
     y_val = get_y_arrays_from_ixs(y_val_ixs)
     CsP2 = np.log2(C_list)
@@ -92,9 +82,7 @@ def search_svm_rbf_wrapper(X_train, X_val, y_train_ixs, y_val_ixs, C_list, gamma
 
 
 def search_svm_custom_wrapper(X_train, X_val, y_train_ixs, y_val_ixs, C_list):
-    """Wrapper for Custom SVM C optimization using grid_search_svm_custom.
-    Uses the same C list as linear SVM (converted to log2 exponents).
-    """
+    
     y_train = get_y_arrays_from_ixs(y_train_ixs)
     y_val = get_y_arrays_from_ixs(y_val_ixs)
     CsP2 = np.log2(C_list)
@@ -124,14 +112,7 @@ def search_optimal_params_kfold(train_data, all_features, top5_roc, top5_kruskal
                                 val_data=None,
                                 X_pca_val=None,
                                 LD1_val=None):
-    """
-    K-fold hyperparameter search using training (+ validation if provided).
-    If `val_data` is passed, it is concatenated with `train_data` before CV.
-    For PCA/LDA arrays, pass corresponding validation arrays (`X_pca_val`, `LD1_val`)
-    so they can be concatenated to match the combined labels length.
-    Returns best params per feature set by lowest average validation error.
-    Note: PCA/LDA not included here unless fold-specific arrays are provided.
-    """
+    
     # Combine train + validation data if available
     if val_data is not None and isinstance(val_data, pd.DataFrame):
         try:

@@ -3,12 +3,9 @@ import plotly.express as px
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
 def lda_analysis(dados):
-    #---------LDA---------
 
-
-
-    X=dados.to_numpy()[:,:-1] #todas as colunas menos a última 
-    y=dados.to_numpy()[:,-1] #só a coluna da Classificação
+    X=dados.to_numpy()[:,:-1]  
+    y=dados.to_numpy()[:,-1] 
 
 
     # prepare transform on dataset
@@ -17,7 +14,7 @@ def lda_analysis(dados):
     # apply transform to dataset
     transformed = lda.transform(X)  
 
-    LD1 = transformed[:, 0]  # First linear discriminant
+    LD1 = transformed[:, 0]  
 
     print("LDA scalings (eigenvectors)")
     print(lda.scalings_)
@@ -30,22 +27,21 @@ def lda_analysis(dados):
     fig.update_traces(marker_size=10)
     fig.update_layout(
         xaxis=dict(
-            title=dict(text="LDA1", font=dict(size=18)),  # X-axis title font
-            tickfont=dict(size=14)                        # X-axis tick font
+            title=dict(text="LDA1", font=dict(size=18)), 
+            tickfont=dict(size=14)                        
         ),
         yaxis=dict(
-            title=dict(text=""),  # No title for y-axis (since it's just 0s)
+            title=dict(text=""),  
             tickfont=dict(size=14),
-            showticklabels=False  # Hide y-axis tick labels completely
+            showticklabels=False  
         ),
         legend=dict(
             font=dict(size=14),
             title=dict(font=dict(size=16))
         ),
-        margin=dict(l=40, r=20, t=40, b=40),  # tighten whitespace
+        margin=dict(l=40, r=20, t=40, b=40),  
         autosize=True
     )
-    # fig.show()
     fig.write_html("plots/lda_projection_onto_lda1.html")
     
 

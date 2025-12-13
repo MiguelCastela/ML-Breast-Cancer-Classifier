@@ -4,9 +4,7 @@ import numpy as np
 
 
 def train_mahalanobis_distance(feature_names, method_name="Unknown", data=None, ixHealthy=None, ixCancer=None):
-    """
-    Trains Mahalanobis classifier by computing class means and pooled covariance.
-    """
+    
 
     print(f"\n=== MAHALANOBIS DISTANCE CLASSIFIER ({method_name}) ===")
     print(f"Using features: {feature_names}")
@@ -19,11 +17,8 @@ def train_mahalanobis_distance(feature_names, method_name="Unknown", data=None, 
     mu_healthy = np.mean(X_healthy, axis=0)
     mu_cancer  = np.mean(X_cancer, axis=0)
 
-    # Pooled covariance
-
 
     if X_healthy.ndim == 1 or X_healthy.shape[1] == 1:
-        # variance is scalar
         var_healthy = np.var(X_healthy, ddof=1)
         pooled_var = (np.var(X_healthy, ddof=1) + np.var(X_cancer, ddof=1)) / 2
         inv_cov = 1.0 / pooled_var
@@ -39,7 +34,6 @@ def train_mahalanobis_distance(feature_names, method_name="Unknown", data=None, 
         "mu_cancer": mu_cancer,
         "inv_cov": inv_cov
     }
-    # Print training metrics
     X_train = np.concatenate([X_healthy, X_cancer], axis=0)
     y_train = np.concatenate([np.zeros(len(X_healthy)), np.ones(len(X_cancer))])
     if X_train.shape[1] == 1:
@@ -80,10 +74,7 @@ def train_mahalanobis_distance(feature_names, method_name="Unknown", data=None, 
 
 
 def test_mahalanobis_distance(model, data=None , ixHealthy=None, ixCancer=None):
-    """
-    Classifies test data using Mahalanobis discriminant and computes metrics.
-    """
-
+   
 
     if ixHealthy is None or ixCancer is None:
         ixHealthy = np.where(data["Classification"] == "Healthy")
@@ -94,8 +85,8 @@ def test_mahalanobis_distance(model, data=None , ixHealthy=None, ixCancer=None):
 
 
     y_true = np.ones(len(X_test))
-    y_true[ixHealthy] = 0   # healthy
-    y_true[ixCancer]  = 1   # cancer
+    y_true[ixHealthy] = 0   
+    y_true[ixCancer]  = 1   
 
     muH = model["mu_healthy"]
     muC = model["mu_cancer"]
@@ -114,9 +105,8 @@ def test_mahalanobis_distance(model, data=None , ixHealthy=None, ixCancer=None):
     # Decision function: (muC - muH)^T * Ci * (x - 0.5*(muC + muH))
         dx = ((muC - muH).T @ Ci @ (X_test.T - 0.5*(muC + muH)[:, np.newaxis])).flatten()
     y_pred = np.zeros_like(y_true)
-    y_pred[dx > 0] = 1  # classify as cancer
+    y_pred[dx > 0] = 1  
 
-    # Metrics
     TP = np.sum((y_true == 1) & (y_pred == 1))
     TN = np.sum((y_true == 0) & (y_pred == 0))
     FP = np.sum((y_true == 0) & (y_pred == 1))

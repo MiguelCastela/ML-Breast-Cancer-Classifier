@@ -20,15 +20,7 @@ from classifier_random_forest import train_random_forest, test_random_forest
 
 
 def run_all_classifiers(train_data, test_data, ixHealthy_train, ixCancer_train, ixHealthy_test, ixCancer_test, all_features, top5_roc=None, top5_kruskall=None, X_pca_train=None, X_pca_test=None, LD1_train=None, LD1_test=None):
-   
 
-    """
-    Run classifiers using different feature sets and train/test split:
-    - train_data / test_data: pandas DataFrames with the same columns
-    - top5_roc / top5_kruskall: lists of column names from original dataframe
-    - X_pca_train / X_pca_test: numpy arrays for PCA features
-    - LD1_train / LD1_test: numpy arrays for LDA1 (1D) features
-    """
     results = {}
     train_results = {}
 
