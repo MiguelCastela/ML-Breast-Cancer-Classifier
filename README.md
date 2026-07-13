@@ -126,3 +126,8 @@ by editing the `__main__` block:
   this variance.
 - The generated plots and Python bytecode are intentionally excluded from version
   control (see `.gitignore`).
+
+## Authors
+
+- Mariana Duarte
+- Miguel Castela
