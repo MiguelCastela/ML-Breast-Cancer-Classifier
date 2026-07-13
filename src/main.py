@@ -6,16 +6,16 @@ warnings.filterwarnings(
     module="sklearn.ensemble._weight_boosting"
 )
 
-import ROC_AUC as roc_auc_module
-import kruskal_wallis as kruskal_wallis_module
-from PCA import pca_analysis, pca_scree, pca_kaiser 
-from LDA import lda_analysis, lda_test
-from classifiers import run_all_classifiers
+from feature_selection import roc_auc as roc_auc_module
+from feature_selection import kruskal_wallis as kruskal_wallis_module
+from dimensionality_reduction.pca import pca_analysis, pca_scree, pca_kaiser
+from dimensionality_reduction.lda import lda_analysis, lda_test
+from classifiers.run_all import run_all_classifiers
 import plotly.graph_objects as go
 import numpy as np
 from plotly.subplots import make_subplots
-from data_loader import get_random_train_test_split
-from run_grid_search import search_optimal_params_kfold
+from preprocessing.data_loader import get_random_train_test_split
+from tuning.run_grid_search import search_optimal_params_kfold
 from collections import Counter
 import random
 from collections import defaultdict, Counter

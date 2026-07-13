@@ -1,2 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
 venv/
 myenv/
+.venv/
+env/
+
+# Generated plot outputs (keep the directory, ignore its contents)
+src/plots/*
+!src/plots/.gitkeep
+
+# LaTeX build artifacts
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.toc
+*.synctex.gz
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
